@@ -58,3 +58,5 @@ docker-compose.override.yml
 
 # Git
 .git/
+heute-express/orders_list.json
+heute-express/.heute_*
