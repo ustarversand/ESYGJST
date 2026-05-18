@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data / Logs
+*.db
+*.db-*
+*.log
+logs/
+data/
+exports/
+订单导出/
+身份证上传/
+
+# Credentials
+.heute_cred
+.heute_token
+.heute_token.txt
+.track_cookies
+
+# Docker volumes
+/volume1/

@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.log.*
+order_push.log
+order_sync.log
+
+# Data / secrets
+.env
+.env.*
+*.token
+*.cred
+*.cookies
+*.db
+*.sqlite
+*.sqlite3
+*.xlsx
+!data/sku_mapping.xlsx
+!**/订单批量导入模版.xlsx
+
+# Cache / temp
+temp/
+tmp/
+*.bak
+*.old
+*.cache
+idcard_cache.db
+product_cache.json
+
+# CSV / JSON exports
+*.csv
+*.json
+!requirements.txt
+!package.json
+
+# Docker
+docker-compose.override.yml
+
+# Git
+.git/

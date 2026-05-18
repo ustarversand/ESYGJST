@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>货易达物流看板</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0f172a; --card: #1e293b; --border: #334155;
+  --text: #e2e8f0; --text2: #94a3b8;
+  --accent: #3b82f6; --success: #22c55e; --warn: #f59e0b; --danger: #ef4444;
+  --purple: #a855f7;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.app { max-width: 1440px; margin: 0 auto; padding: 20px; }
+
+/* Header */
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 22px; display: flex; align-items: center; gap: 10px; }
+.header h1 span { background: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 400; }
+.header-right { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text2); }
+.btn { padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text);
+       cursor: pointer; font-size: 13px; transition: .2s; }
+.btn:hover { background: var(--border); }
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { opacity: .85; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.clickable { cursor: pointer; text-decoration: underline dotted rgba(59,130,246,.4); transition: .2s; }
+.clickable:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+/* Stats Cards */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.stat-card .label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.stat-card .value { font-size: 28px; font-weight: 700; }
+.stat-card .sub { font-size: 11px; margin-top: 4px; }
+.stat-card .sub.positive { color: var(--success); }
+.stat-card .sub.negative { color: var(--danger); }
+
+/* Charts */
+.charts { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px; margin-bottom: 20px; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.chart-card h3 { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+.chart-card canvas { max-height: 220px; }
+
+/* Sections */
+.section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+.section-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px;
+                  border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+.section-header h2 { font-size: 15px; }
+.section-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 12px; color: var(--text2); font-weight: 500; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid rgba(51,65,85,.5); }
+tr:hover td { background: rgba(59,130,246,.05); }
+.mono { font-family: 'SF Mono', monospace; font-size: 12px; }
+.status-signed { color: var(--success); }
+.status-transit { color: var(--accent); }
+.status-error { color: var(--danger); }
+.status-other { color: var(--warn); }
+.status-confirmed { color: #a855f7; }  /* 紫色：国内确认签收 */
+
+/* Search & Filter */
+.search-box { display: flex; gap: 8px; }
+.search-box input { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+                   color: var(--text); font-size: 13px; outline: none; width: 200px; }
+.search-box input:focus { border-color: var(--accent); }
+select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+         color: var(--text); font-size: 13px; outline: none; }
+
+/* Pagination */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; }
+.pagination span { font-size: 12px; color: var(--text2); }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; justify-content: center;
+                 align-items: center; z-index: 100; padding: 20px; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 12px; max-width: 700px;
+          width: 100%; max-height: 80vh; overflow-y: auto; }
+.modal-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { font-size: 16px; }
+.modal-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 20px; }
+.modal-body { padding: 16px; }
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+.timeline-item { position: relative; margin-bottom: 14px; }
+.timeline-item::before { content: ''; position: absolute; left: -18px; top: 6px; width: 10px; height: 10px;
+                          border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.timeline-item.signed::before { background: var(--success); }
+.timeline-item.warn::before { background: var(--warn); }
+.timeline-item .time { font-size: 11px; color: var(--text2); }
+.timeline-item .desc { font-size: 13px; margin: 2px 0; }
+.timeline-item .loc { font-size: 11px; color: var(--text2); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding: 0 0; overflow-x: auto; }
+.tab-btn { padding: 10px 18px; font-size: 13px; background: none; border: none; color: var(--text2); cursor: pointer;
+           border-bottom: 2px solid transparent; transition: .2s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-content { animation: fadeIn .25s ease; }
+.loading { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
+.error-bar { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); border-radius: 8px;
+             padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--danger); }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; font-size: 13px; }
+.detail-grid div { padding: 4px 0; border-bottom: 1px solid rgba(51,65,85,.2); }
+.detail-grid span { color: var(--text2); display: inline-block; min-width: 64px; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .charts { grid-template-columns: 1fr 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .charts { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .header { flex-direction: column; align-items: flex-start; }
+  .search-box input { width: 140px; }
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn .3s ease; }
+</style>
+</head>
+<body>
+<div id="app" class="app">
+  <div v-if="error" class="error-bar">⚠ {{ error }}</div>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>📦 货易达物流看板 <span>v1.0</span></h1>
+    <div class="header-right">
+      <select v-model="currentMonth" @change="switchMonth" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;outline:none">
+        <option value="april">📅 2026年4月</option>
+        <option value="may">📅 2026年5月</option>
+      </select>
+      <span>🔄 {{ autoRefresh ? '自动刷新中' : '手动' }}</span>
+      <span>⏱ {{ lastUpdate }}</span>
+      <button class="btn" @click="toggleAutoRefresh">{{ autoRefresh ? '暂停' : '自动' }}</button>
+      <button class="btn btn-primary" @click="refresh" :disabled="loading">刷新</button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats fade-in">
+    <div class="stat-card">
+      <div class="label">📋 总订单</div>
+      <div class="value" style="color:var(--accent)">{{ stats.total_orders }}</div>
+      <div class="sub">4月份全部订单</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">📡 已查轨迹</div>
+      <div class="value" style="color:var(--success)">{{ stats.tracked }}</div>
+      <div class="sub" :class="stats.untracked > 0 ? 'negative' : 'positive'">
+        {{ stats.untracked > 0 ? `待查 ${stats.untracked}` : '全部完成' }}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="label">✅ 已签收</div>
+      <div class="value" style="color:var(--success)">{{ getStatusCount('已签收') }}</div>
+      <div class="sub positive">{{ getStatusPercent('已签收') }}% of tracked</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">🚚 运输中</div>
+      <div class="value" style="color:var(--accent)">{{ getTransitCount() }}</div>
+      <div class="sub">含清关/派件/在途</div>
+    </div>
+    <div class="stat-card">
+      <div class="label" style="color:var(--danger)">⚠ 异常</div>
+      <div class="value" style="color:var(--danger)">{{ stats.abnormal_count }}</div>
+      <div class="sub negative">超7天未入库</div>
+    </div>
+    <div class="stat-card">
+      <div class="label" style="color:var(--text2)">🗑 已撤销</div>
+      <div class="value" style="color:var(--text2)">{{ stats.cancelled_count }}</div>
+      <div class="sub">状态-6 无需查询</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn" :class="{active:activeTab==='overview'}" @click="activeTab='overview';switchTab()">📊 概览</button>
+    <button class="tab-btn" :class="{active:activeTab==='abnormal'}" @click="activeTab='abnormal'">⚠️ 异常 ({{ stats.abnormal_count }})</button>
+    <button class="tab-btn" :class="{active:activeTab==='anomalies'}" @click="activeTab='anomalies';loadAnomalies()">🔍 对比 ({{ anomalyStats.severe || 0 }})</button>
+    <button class="tab-btn" :class="{active:activeTab==='cancelled'}" @click="activeTab='cancelled'">🗑 已撤销 ({{ stats.cancelled_count }})</button>
+    <button class="tab-btn" :class="{active:activeTab==='tracking'}" @click="activeTab='tracking'">📡 轨迹 ({{ stats.tracked }})</button>
+    <button class="tab-btn" :class="{active:activeTab==='finance'}" @click="activeTab='finance';loadFinance();loadProductStats()">💰 财务</button>
+    <button class="tab-btn" :class="{active:activeTab==='overweight'}" @click="activeTab='overweight';loadOverweight()">📦 超重</button>
+    <button class="tab-btn" :class="{active:activeTab==='search'}" @click="activeTab='search'">🔍 查询</button>
+  </div>
+
+  <!-- Tab: 概览 -->
+  <div v-if="activeTab==='overview'" class="tab-content">
+    <div class="charts" v-if="chartReady">
+      <div class="chart-card">
+        <h3>订单状态分布</h3>
+        <canvas ref="stateChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>物流轨迹状态</h3>
+        <canvas ref="trackChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>每周订单量</h3>
+        <canvas ref="weeklyChart"></canvas>
+      </div>
+    </div>
+    <div class="loading" v-else>加载图表中...</div>
+  </div>
+
+  <!-- Tab: 异常滞留 -->
+  <div v-if="activeTab==='abnormal'" class="tab-content">
+    <div class="section" v-if="stats.abnormal_orders?.length">
+      <div class="section-header">
+        <h2>⚠️ 异常滞留 ({{ stats.abnormal_count }})</h2>
+        <span style="font-size:12px;color:var(--text2)">待入库超过7天</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>订单号</th><th>收件人</th><th>状态</th><th>创建时间</th><th>发货人</th><th>国际单号</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="o in stats.abnormal_orders" :key="o.sn">
+              <td class="mono clickable" @click="viewOrder(o.sn)">{{ o.sn }}</td>
+              <td>{{ o.consignee }}</td>
+              <td><span class="badge status-other">{{ o.state }}</span></td>
+              <td>{{ o.created }}</td>
+              <td>{{ o.sender }}</td>
+              <td class="mono" style="font-size:11px">{{ o.tracking }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div v-else class="loading">暂无异常订单</div>
+  </div>
+
+  <!-- Tab: 异常对比 -->
+  <div v-if="activeTab==='anomalies'" class="tab-content">
+    <div class="section" v-if="anomalyItems.length">
+      <div class="section-header">
+        <h2>🔍 轨迹双轨对比</h2>
+        <span style="font-size:12px;color:var(--text2)">
+          扫描 {{ anomalyStats.total }} 个在途单号 &nbsp;
+          🟢 {{ anomalyStats.ok }} &nbsp;
+          🟡 {{ anomalyStats.warning }} &nbsp;
+          🔴 {{ anomalyStats.severe }}
+          <span v-if="anomalyStats.scanned_at" style="margin-left:8px">| {{ anomalyStats.scanned_at }}</span>
+        </span>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="stat-card" style="flex:1;min-width:120px;background:#28a74520;border-color:#28a745">
+          <div class="stat-number" style="color:#28a745">{{ anomalyStats.ok }}</div>
+          <div class="stat-label">🟢 一致</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:120px;background:#ffc10720;border-color:#ffc107">
+          <div class="stat-number" style="color:#ffc107">{{ anomalyStats.warning }}</div>
+          <div class="stat-label">🟡 注意</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:120px;background:#dc354520;border-color:#dc3545">
+          <div class="stat-number" style="color:#dc3545">{{ anomalyStats.severe }}</div>
+          <div class="stat-label">🔴 严重</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>订单号</th>
+            <th>国际单号</th>
+            <th>国际状态</th>
+            <th>国内单号</th>
+            <th>国内状态</th>
+            <th>时间差</th>
+            <th>对比</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="a in anomalyItems" :key="a.intl_tracking"
+                :style="{background: a.match==='severe'?'rgba(220,53,69,.08)':a.match==='warning'?'rgba(255,193,7,.05)':''}">
+              <td class="mono clickable" @click="viewOrder(a.order_sn)">{{ a.order_sn }}</td>
+              <td class="mono" style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis" :title="a.intl_tracking">{{ a.intl_tracking?.slice(0,28) }}</td>
+              <td><span class="badge" :class="statusClass(a.intl?.status||'')">{{ a.intl?.status || '?' }}</span></td>
+              <td class="mono" style="font-size:11px">{{ a.dom_tracking?.slice(0,22) }}</td>
+              <td><span class="badge" :class="statusClass(a.dom?.status||'')">{{ a.dom?.status || '?' }}</span></td>
+              <td style="font-size:12px">{{ a.time_diff_hours ? a.time_diff_hours+'h' : '-' }}</td>
+              <td>
+                <span v-if="a.match==='severe'" class="badge" style="background:#dc3545;color:#fff">🔴 严重</span>
+                <span v-else-if="a.match==='warning'" class="badge" style="background:#ffc107;color:#333">🟡 注意</span>
+                <span v-else class="badge" style="background:#28a745;color:#fff">🟢 一致</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div v-else-if="anomalyLoading" class="loading">加载中...</div>
+    <div v-else class="loading">暂无对比数据 — 运行 scan_anomalies.py 生成</div>
+  </div>
+
+  <!-- Tab: 已撤销 -->
+  <div v-if="activeTab==='cancelled'" class="tab-content">
+    <div class="section" v-if="stats.cancelled_orders?.length">
+      <div class="section-header">
+        <h2>🗑 已撤销 ({{ stats.cancelled_count }})</h2>
+        <span style="font-size:12px;color:var(--text2)">状态-6 已取消/撤销，不查询轨迹</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>订单号</th><th>收件人</th><th>状态</th><th>创建时间</th><th>发货人</th><th>国际单号</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="o in stats.cancelled_orders" :key="o.sn">
+              <td class="mono clickable" @click="viewOrder(o.sn)">{{ o.sn }}</td>
+              <td>{{ o.consignee }}</td>
+              <td><span class="badge" style="background:rgba(100,116,139,.3);color:var(--text2)">{{ o.state }}</span></td>
+              <td>{{ o.created }}</td>
+              <td>{{ o.sender }}</td>
+              <td class="mono" style="font-size:11px">{{ o.tracking }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div v-else class="loading">暂无已撤销订单</div>
+  </div>
+
+  <!-- Tab: 轨迹 -->
+  <div v-if="activeTab==='tracking'" class="tab-content">
+    <div class="section">
+      <div class="section-header">
+        <h2>📡 轨迹查询结果 ({{ trackingTotal }})</h2>
+        <div class="section-controls">
+          <select v-model="statusFilter" @change="loadTracking">
+            <option value="all">全部状态</option>
+            <option v-for="(cnt, st) in stats.tracking_status" :key="st" :value="st">{{ st }} ({{ cnt }})</option>
+          </select>
+          <span style="font-size:12px;color:var(--text2)">第{{ trackPage }}页 / 共{{ Math.ceil(trackingTotal/trackPerPage) }}页</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>国际单号</th><th>订单号</th><th>收件人</th><th>当前状态</th><th>物流公司</th><th>国内单号</th><th>轨迹数</th><th>查询时间</th><th></th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="r in trackingItems" :key="r.tracking_no">
+              <td class="mono" style="font-size:11px">{{ r.tracking_no.slice(0,25) }}...</td>
+              <td class="mono clickable" style="font-size:11px" @click="viewOrder(r.order_sn)">{{ r.order_sn }}</td>
+              <td>{{ r.consignee }}</td>
+              <td><span class="badge" :class="statusClass(r.status)">{{ r.status }}</span></td>
+              <td>{{ r.company }}</td>
+              <td class="mono" style="font-size:11px">{{ r.domestic_no }}</td>
+              <td>{{ r.detail_count }}</td>
+              <td style="font-size:11px;color:var(--text2)">{{ r.queried_at?.slice(5,16) }}</td>
+              <td><button class="btn" style="padding:2px 8px;font-size:11px" @click="viewDetail(r.tracking_no)">详情</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" v-if="trackingTotal > trackPerPage">
+        <button class="btn" @click="trackPage > 1 && (trackPage--, loadTracking())" :disabled="trackPage<=1">‹</button>
+        <span>{{ trackPage }} / {{ Math.ceil(trackingTotal/trackPerPage) }}</span>
+        <button class="btn" @click="trackPage < Math.ceil(trackingTotal/trackPerPage) && (trackPage++, loadTracking())" :disabled="trackPage>=Math.ceil(trackingTotal/trackPerPage)">›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: 财务 -->
+  <div v-if="activeTab==='finance'" class="tab-content">
+    <div class="loading" v-if="financeLoading">加载财务数据中...</div>
+    <template v-else>
+      <!-- Stats -->
+      <div class="stats" style="margin-bottom:16px">
+        <div class="stat-card">
+          <div class="label">📋 称重补款总笔数</div>
+          <div class="value" style="color:var(--accent)">{{ finance.total_count }}</div>
+          <div class="sub">2026年4月</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">💰 称重补款总额</div>
+          <div class="value" style="color:var(--danger)">{{ finance.total_amount }} 元</div>
+          <div class="sub negative">从余额扣款</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">📅 涉及天数</div>
+          <div class="value" style="color:var(--warn)">{{ finance.daily?.length || 0 }} 天</div>
+          <div class="sub">日均 {{ (finance.total_count / (finance.daily?.length || 1)).toFixed(0) }} 笔</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">📊 日均金额</div>
+          <div class="value" style="color:var(--text2)">{{ (finance.total_amount / (finance.daily?.length || 1)).toFixed(2) }} 元</div>
+          <div class="sub">平均每天扣款</div>
+        </div>
+      </div>
+
+      <!-- Charts: daily bar + product pie -->
+      <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:20px">
+        <div class="chart-card">
+          <h3>📈 每日补款趋势</h3>
+          <canvas ref="financeChart" style="max-height:240px"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>🧩 产品占比 <span v-if="productStats.pending > 0" style="font-size:11px;color:var(--warn)">⏳{{ productStats.cached }}/{{ productStats.total_orders }}</span></h3>
+          <canvas ref="productPieChart" style="max-height:240px"></canvas>
+        </div>
+      </div>
+
+      <!-- 🔝 Product Surcharge Ranking -->
+      <div class="section" v-if="groupedProducts.length">
+        <div class="section-header">
+          <h2>🔝 产品补款排行 Top10</h2>
+          <span style="font-size:12px;color:var(--text2)">按补款金额从高到低</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div v-for="(pg, i) in groupedProducts.slice(0,10)" :key="'rank'+i"
+               style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;
+                      background:rgba(239,68,68,0.04);font-size:13px">
+            <span style="width:24px;text-align:center;font-weight:700;color:var(--text2)">{{ i+1 }}</span>
+            <span style="flex:1;font-weight:500">{{ pg.name }}</span>
+            <span class="badge" style="background:rgba(239,68,68,.12);color:var(--danger);min-width:70px;text-align:center">{{ pg.amount.toFixed(2) }}元</span>
+            <span style="font-size:12px;color:var(--text2);min-width:40px;text-align:right">{{ pg.count }}笔</span>
+            <div style="flex:0 0 120px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div :style="{width: (pg.amount / groupedProducts[0].amount * 100).toFixed(0)+'%', height:'100%', background:'var(--danger)', borderRadius:'3px'}"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Group List -->
+      <div class="section">
+        <div class="section-header">
+          <h2>📦 按产品分组 ({{ groupedProducts.length }}类 | {{ productStats.total_orders }}笔)</h2>
+          <div class="section-controls">
+            <div class="search-box">
+              <input v-model="orderSearch" @keyup.enter="orderSearch=orderSearch" placeholder="搜索订单号..." style="width:160px">
+            </div>
+            <span style="font-size:12px;color:var(--text2)">点产品名展开订单</span>
+          </div>
+        </div>
+
+        <!-- Collapsible Product Groups -->
+        <div v-for="(pg, pi) in groupedProducts" :key="pg.name">
+          <!-- Product Group Header -->
+          <div @click="toggleProduct(pi)"
+               style="display:flex;align-items:center;padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);
+                      background:rgba(51,65,85,.15);transition:.15s"
+               @mouseenter="$event.target.style.background='rgba(59,130,246,.08)'"
+               @mouseleave="$event.target.style.background='rgba(51,65,85,.15)'">
+            <span style="width:20px;font-size:12px;color:var(--text2)">{{ expanded[pi] ? '▼' : '▶' }}</span>
+            <span style="flex:1;font-size:14px;font-weight:500">{{ pg.name }}</span>
+            <span class="badge" style="background:rgba(239,68,68,.15);color:var(--danger);margin-right:12px">{{ pg.amount.toFixed(2) }}元</span>
+            <span style="font-size:12px;color:var(--text2);margin-right:8px">{{ pg.count }}笔</span>
+            <span style="font-size:12px;color:var(--text2)">{{ pg.order_count }}单</span>
+          </div>
+
+          <!-- Expanded Order List -->
+          <div v-if="expanded[pi]" class="fade-in">
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr>
+                  <th>订单号</th><th>补款次数</th><th>总金额(元)</th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="o in pg.orders" :key="o.order_sn"
+                      @click="viewOrder(o.order_sn)" style="cursor:pointer">
+                    <td class="mono clickable" style="font-size:12px">{{ o.order_sn }}</td>
+                    <td><span class="badge" :class="o.count >= 3 ? 'status-other' : 'status-signed'">{{ o.count }}次</span></td>
+                    <td style="color:var(--danger)">{{ o.amount.toFixed(2) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Tab: 超重分析 -->
+  <div v-if="activeTab==='overweight'" class="tab-content">
+    <div class="section" v-if="overweightData.products?.length">
+      <div class="section-header">
+        <h2>📦 产品超重分析</h2>
+        <span style="font-size:12px;color:var(--text2)">
+          {{ overweightData.summary?.total_products }}个产品 | {{ overweightData.summary?.total_orders }}单 | 总补款 {{ overweightData.summary?.total_surcharge }}元
+        </span>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="stat-card" style="flex:1;min-width:140px;background:rgba(239,68,68,.08)">
+          <div class="stat-number" style="color:var(--danger)">{{ overweightData.summary?.total_surcharge?.toFixed(0) || 0 }}</div>
+          <div class="stat-label">总补款(元)</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:140px">
+          <div class="stat-number">{{ overweightData.summary?.total_products || 0 }}</div>
+          <div class="stat-label">涉及产品</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:140px">
+          <div class="stat-number">{{ overweightData.summary?.total_orders || 0 }}</div>
+          <div class="stat-label">分析订单</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>产品</th>
+            <th>订单</th>
+            <th>超重</th>
+            <th>超重率</th>
+            <th>总补款</th>
+            <th>均补</th>
+            <th>均重kg</th>
+            <th>打包建议</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="p in overweightData.products" :key="p.name"
+                :style="{background: p.rate>=80?'rgba(220,53,69,.06)':p.rate>=60?'rgba(255,193,7,.04)':''}">
+              <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis" :title="p.name">{{ p.name }}</td>
+              <td>{{ p.orders }}</td>
+              <td>{{ p.surcharged }}</td>
+              <td>
+                <span :style="{color: p.rate>=80?'var(--danger)':p.rate>=60?'var(--warn)':'var(--text2)'}">{{ p.rate }}%</span>
+              </td>
+              <td style="color:var(--danger);font-weight:500">{{ p.total_surcharge }}</td>
+              <td>{{ p.avg_surcharge }}</td>
+              <td>{{ p.avg_weight_kg }}</td>
+              <td style="font-size:12px">{{ p.advice }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div v-else-if="overweightLoading" class="loading">分析中...</div>
+    <div v-else class="loading">暂无超重数据 — 需产品缓存数据</div>
+  </div>
+
+  <!-- Tab: 查询 -->
+  <div v-if="activeTab==='search'" class="tab-content">
+    <div class="section">
+      <div class="section-header">
+        <h2>🔍 运单查询</h2>
+        <div class="search-box">
+          <input v-model="searchQuery" @keyup.enter="doSearch" placeholder="运单号 / 订单号 / 收件人...">
+          <button class="btn btn-primary" @click="doSearch">查询</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto" v-if="searchResults.length">
+        <table>
+          <thead><tr>
+            <th>订单号</th><th>收件人</th><th>状态</th><th>线路</th><th>国际单号</th><th>国内单号</th><th>物流状态</th><th>创建时间</th><th></th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="r in searchResults" :key="r.order_sn">
+              <td class="mono clickable" style="font-size:11px" @click="viewOrder(r.order_sn)">{{ r.order_sn }}</td>
+              <td>{{ r.consignee }}</td>
+              <td><span class="badge" :class="statusClass(r.state)">{{ r.state }}</span></td>
+              <td style="font-size:12px">{{ r.line }}</td>
+              <td class="mono" style="font-size:11px">{{ r.tracking_no.slice(0,20) }}...</td>
+              <td class="mono" style="font-size:11px">{{ r.domestic_no }}</td>
+              <td><span class="badge" :class="statusClass(r.tracking_status)">{{ r.tracking_status }}</span></td>
+              <td style="font-size:12px">{{ r.created }}</td>
+              <td><button class="btn" style="padding:2px 8px;font-size:11px" @click="viewDetail(r.tracking_no)">轨迹</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-else-if="searchDone" class="loading">未找到匹配结果</div>
+      <div v-else class="loading">输入运单号/订单号/收件人查询</div>
+    </div>
+  </div>
+
+  <!-- Detail Modal (Tracking) -->
+  <div class="modal-overlay" v-if="detailData" @click.self="detailData=null">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>📦 物流轨迹 — {{ detailData.tracking_no?.slice(0,25) }}...</h2>
+        <button class="modal-close" @click="detailData=null">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px">
+          <div><span style="color:var(--text2)">物流公司:</span> {{ detailData.logisticsCompany || '-' }}</div>
+          <div><span style="color:var(--text2)">国内单号:</span> {{ detailData.extTrackNoCn || '-' }}</div>
+          <div><span style="color:var(--text2)">当前状态:</span>
+            <span class="badge" :class="statusClass(detailData.currentStatus)">{{ detailData.currentStatus }}</span>
+            <span v-if="detailData.domesticComparison?.autoCorrected" style="font-size:11px;color:#a855f7;margin-left:4px">🟣 国内确认修正</span>
+          </div>
+          <div><span style="color:var(--text2)">轨迹:</span> {{ detailData.trackingDetails?.length || 0 }} 条</div>
+        </div>
+        <div v-if="detailData.trackingDetails?.length" class="timeline">
+          <div v-for="(log, i) in detailData.trackingDetails" :key="i"
+               class="timeline-item" :class="statusTimelineClass(log.statusName)">
+            <div class="time">{{ log.trackingTime }}</div>
+            <div class="desc">{{ log.trackingDesc }}</div>
+            <div class="loc" v-if="log.address">📍 {{ log.address }}</div>
+            <div class="loc" v-if="log.signerName">👤 签收: {{ log.signerName }} ({{ log.signerTypeDesc }})</div>
+            <div class="loc" v-if="log.contact">📞 {{ log.contact }} {{ log.contactPhone }}</div>
+          </div>
+        </div>
+        <div v-else style="padding:12px 0;font-size:13px">
+          <div style="margin-bottom:8px"><span style="color:var(--text2)">最新状态:</span> {{ detailData.latestDesc || '暂无轨迹数据' }}</div>
+          <div v-if="detailData.latestDesc" style="color:var(--text2);font-size:12px">{{ detailData.latestTime || '' }}</div>
+        </div>
+
+        <!-- ── 国内单号双轨对比 ── -->
+        <div v-if="detailData.domesticComparison" style="margin-top:16px;border-top:2px solid var(--accent);padding-top:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <h4 style="font-size:14px;margin:0">🇨🇳 国内单号对比</h4>
+            <span style="font-size:12px;color:var(--text2)">{{ detailData.domesticComparison.trackingNo }}</span>
+            <span style="font-size:11px;color:var(--text2)">({{ detailData.domesticComparison._source }})</span>
+            <span v-if="detailData.domesticComparison.match==='severe'" class="badge" style="background:#dc3545;color:#fff;margin-left:auto">🔴 严重</span>
+            <span v-if="detailData.domesticComparison.autoCorrected" style="font-size:10px;color:#a855f7;margin-left:4px">已修正</span>
+            <span v-else-if="detailData.domesticComparison.match==='warning'" class="badge" style="background:#ffc107;color:#333;margin-left:auto">🟡 注意</span>
+            <span v-else class="badge" style="background:#28a745;color:#fff;margin-left:auto">🟢 一致</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:10px">
+            <div>
+              <span style="color:var(--text2)">国际: </span>
+              <span class="badge" :class="statusClass(detailData.currentStatus)">{{ detailData.currentStatus }}</span>
+              <span style="font-size:11px;color:var(--text2);margin-left:4px">{{ detailData.latestTime?.slice(0,16) }}</span>
+            </div>
+            <div>
+              <span style="color:var(--text2)">国内: </span>
+              <span class="badge" :class="statusClass(detailData.domesticComparison.currentStatus)">{{ detailData.domesticComparison.currentStatus }}</span>
+              <span style="font-size:11px;color:var(--text2);margin-left:4px">{{ detailData.domesticComparison.latestTime?.slice(0,16) }}</span>
+            </div>
+          </div>
+          <div v-if="detailData.domesticComparison.timeDiffHours" style="font-size:12px;color:var(--text2);margin-bottom:8px">
+            ⏱ 时间差: {{ detailData.domesticComparison.timeDiffHours }} 小时
+          </div>
+          <div v-if="detailData.domesticComparison.trackingDetails?.length" class="timeline" style="max-height:200px;overflow-y:auto">
+            <div v-for="(log, i) in detailData.domesticComparison.trackingDetails.slice(0,8)" :key="'dom'+i"
+                 class="timeline-item">
+              <div class="time" style="font-size:11px">{{ log.trackingTime }}</div>
+              <div class="desc" style="font-size:12px">{{ log.trackingDesc }}</div>
+              <div class="loc" v-if="log.address" style="font-size:11px">📍 {{ log.address }}</div>
+            </div>
+          </div>
+          <div v-if="detailData.domesticComparison.trackingDetails?.length > 8" style="font-size:11px;color:var(--text2);text-align:center;margin-top:4px">
+            ... 共 {{ detailData.domesticComparison.trackingDetails.length }} 条，显示前8条
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div class="modal-overlay" v-if="orderDetail" @click.self="orderDetail=null">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>📋 订单明细 — {{ orderDetail.sn }}</h2>
+        <button class="modal-close" @click="orderDetail=null">✕</button>
+      </div>
+      <div class="modal-body">
+        <div v-if="orderLoading" class="loading">加载中...</div>
+        <template v-else>
+          <!-- Basic Info -->
+          <h3 style="font-size:14px;margin-bottom:8px;color:var(--accent)">基本信息</h3>
+          <div class="detail-grid">
+            <div><span>状态:</span> <span class="badge" :class="statusClass(orderDetail.state_name)">{{ orderDetail.state_name }}</span></div>
+            <div><span>线路:</span> {{ orderDetail.line_name }}</div>
+            <div><span>重量:</span> {{ orderDetail.weight_kg }} kg</div>
+            <div><span>创建:</span> {{ orderDetail.created }}</div>
+            <div><span>国际单号:</span> <span class="mono">{{ orderDetail.global_waybill }}</span></div>
+            <div><span>国内单号:</span> <span class="mono">{{ orderDetail.temp_line_sn }}</span></div>
+            <div><span>商家单:</span> {{ orderDetail.merchant_order_sn }}</div>
+            <div><span>平台单:</span> {{ orderDetail.platform_sn }}</div>
+          </div>
+
+          <!-- Sender / Consignee -->
+          <h3 style="font-size:14px;margin:16px 0 8px;color:var(--accent)">收发信息</h3>
+          <div class="detail-grid">
+            <div><span>寄件人:</span> {{ orderDetail.sender_name }}</div>
+            <div><span>寄件电话:</span> {{ orderDetail.sender_tel || '-' }}</div>
+            <div><span>收件人:</span> {{ orderDetail.consignee_name }}</div>
+            <div><span>收件电话:</span> {{ orderDetail.consignee_tel || '-' }}</div>
+            <div><span>身份证:</span> {{ orderDetail.consignee_id || '-' }}</div>
+            <div><span>地址:</span> {{ [orderDetail.consignee_province, orderDetail.consignee_city, orderDetail.consignee_county, orderDetail.consignee_address].filter(Boolean).join(' ') || '-' }}</div>
+          </div>
+
+          <!-- Fees -->
+          <h3 style="font-size:14px;margin:16px 0 8px;color:var(--accent)">费用（元）</h3>
+          <div class="detail-grid">
+            <div><span>运费:</span> ¥{{ orderDetail.fee_ship?.toFixed(2) }}</div>
+            <div><span>关税:</span> ¥{{ orderDetail.fee_customs?.toFixed(2) }}</div>
+            <div><span>保险费:</span> ¥{{ orderDetail.fee_insurance?.toFixed(2) }}</div>
+            <div><span>预估:</span> ¥{{ orderDetail.money_estimate?.toFixed(2) }}</div>
+            <div><span>最终:</span> ¥{{ orderDetail.money_final?.toFixed(2) }}</div>
+          </div>
+
+          <!-- Products -->
+          <h3 style="font-size:14px;margin:16px 0 8px;color:var(--accent)">
+            产品明细 ({{ orderDetail.products?.length || 0 }})
+            <span v-if="!orderDetail.has_full_detail" style="font-size:11px;color:var(--text2);font-weight:400"> (基础数据)</span>
+          </h3>
+          <div v-if="orderDetail.products?.length">
+            <table>
+              <thead><tr>
+                <th>产品名</th><th>英文名</th><th>品牌</th><th>数量</th><th>单价(EUR)</th><th>单价(CNY)</th><th>EAN</th><th>净重(g)</th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="(p, i) in orderDetail.products" :key="i">
+                  <td>{{ p.goods_name }}</td>
+                  <td style="font-size:11px">{{ p.goods_name_en || '-' }}</td>
+                  <td>{{ p.brand || '-' }}</td>
+                  <td>{{ p.num }}</td>
+                  <td>{{ p.price?.toFixed(2) }}</td>
+                  <td>{{ p.price_rmb?.toFixed(2) }}</td>
+                  <td class="mono" style="font-size:11px">{{ p.ean || '-' }}</td>
+                  <td>{{ p.net_weight }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else style="color:var(--text2);font-size:13px">暂无产品明细数据</div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, reactive, onMounted, onUnmounted, nextTick, computed, watch } = Vue;
+
+createApp({
+  setup() {
+    const stats = ref({
+      total_orders: 0, tracked: 0, untracked: 0,
+      state_distribution: {}, tracking_status: {},
+      weekly_orders: {}, abnormal_count: 0, abnormal_orders: []
+    });
+    const loading = ref(false);
+    const error = ref(null);
+    const autoRefresh = ref(true);
+    const lastUpdate = ref('');
+    const chartReady = ref(false);
+
+    // Charts refs
+    const stateChart = ref(null);
+    const trackChart = ref(null);
+    const weeklyChart = ref(null);
+    let stateChartInst = null;
+    let trackChartInst = null;
+    let weeklyChartInst = null;
+
+    // Tracking list
+    const trackingItems = ref([]);
+    const trackingTotal = ref(0);
+    const trackPage = ref(1);
+    const trackPerPage = 50;
+    const statusFilter = ref('all');
+
+    // Search
+    const searchQuery = ref('');
+    const searchResults = ref([]);
+    const searchDone = ref(false);
+
+    // Detail modal
+    const detailData = ref(null);
+
+    // Order detail modal
+    const orderDetail = ref(null);
+    const orderLoading = ref(false);
+
+    // Active tab
+    const activeTab = ref('overview');
+    const currentMonth = ref('may');
+
+    // Anomaly comparison
+    const anomalyStats = ref({ total: 0, ok: 0, warning: 0, severe: 0, scanned_at: '' });
+    const anomalyItems = ref([]);
+    const anomalyLoading = ref(false);
+
+    // Overweight analysis
+    const overweightData = ref({ products: [], summary: {} });
+    const overweightLoading = ref(false);
+
+    // Finance
+    const finance = ref({ total_count: 0, total_amount: 0, daily: [] });
+    const financeLoading = ref(false);
+    const financeChart = ref(null);
+    let financeChartInst = null;
+    const financeInitialized = ref(false);
+
+    const topFinanceDays = computed(() => {
+      if (!finance.value.daily?.length) return [];
+      return [...finance.value.daily].sort((a, b) => b.amount - a.amount).slice(0, 5);
+    });
+
+    const maxFinanceAmt = computed(() => {
+      if (!finance.value.daily?.length) return 1;
+      return Math.max(...finance.value.daily.map(d => Math.abs(d.amount)), 1);
+    });
+
+    const loadFinance = async () => {
+      if (financeInitialized.value) return;
+      financeLoading.value = true;
+      try {
+        const r = await fetch(`/api/finance?month=${currentMonth.value}`).then(r => r.json());
+        finance.value = r;
+        financeInitialized.value = true;
+        await nextTick();
+        renderFinanceCharts();
+      } catch (e) {
+        console.error('load finance error', e);
+      } finally {
+        financeLoading.value = false;
+      }
+    };
+
+    const loadAnomalies = async () => {
+      if (anomalyItems.value.length && !anomalyLoading.value) return;
+      anomalyLoading.value = true;
+      try {
+        const r = await fetch(`/api/anomalies?month=${currentMonth.value}`).then(r => r.json());
+        anomalyStats.value = {
+          total: r.total, ok: r.ok, warning: r.warning, severe: r.severe,
+          scanned_at: r.scanned_at
+        };
+        // Sort: severe first
+        anomalyItems.value = (r.items || []).sort((a, b) => {
+          const order = { severe: 0, warning: 1, ok: 2 };
+          return (order[a.match] ?? 3) - (order[b.match] ?? 3);
+        });
+      } catch (e) {
+        console.error('load anomalies error', e);
+      } finally {
+        anomalyLoading.value = false;
+      }
+    };
+
+    const loadOverweight = async () => {
+      if (overweightData.value.products?.length && !overweightLoading.value) return;
+      overweightLoading.value = true;
+      try {
+        const r = await fetch(`/api/finance/overweight?month=${currentMonth.value}`).then(r => r.json());
+        overweightData.value = r;
+      } catch (e) {
+        console.error('load overweight error', e);
+      } finally {
+        overweightLoading.value = false;
+      }
+    };
+
+    const renderFinanceChart = () => {
+      const daily = finance.value.daily;
+      if (!daily?.length || !financeChart.value) return;
+      if (financeChartInst) { financeChartInst.destroy(); }
+      const labels = daily.map(d => d.date.slice(5));
+      const amounts = daily.map(d => d.amount);
+      const counts = daily.map(d => d.count);
+      financeChartInst = new Chart(financeChart.value, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: '金额(元)', data: amounts, backgroundColor: '#ef4444', borderRadius: 3, yAxisID: 'y' },
+            { label: '笔数', data: counts, backgroundColor: 'rgba(59,130,246,.5)', borderRadius: 3, yAxisID: 'y1' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(51,65,85,.3)' }, ticks: { color: '#94a3b8', font: { size: 10 } }, title: { display: true, text: '金额(元)', color: '#ef4444' } },
+            y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } }, title: { display: true, text: '笔数', color: '#3b82f6' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 } }
+          },
+          plugins: {
+            legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } }
+          }
+        }
+      });
+    };
+
+    // ─── 财务: 产品分组折叠 ────────────────────────────────────────────────
+    const orderSearch = ref('');
+    const productStats = ref({ products: [], cached: 0, total_orders: 0, pending: 0 });
+    const productPieChart = ref(null);
+    let productPieChartInst = null;
+    const expanded = ref({});
+
+    const groupedProducts = computed(() => {
+      const list = (productStats.value.products || []).slice().reverse(); // 降序：金额最大在前
+      const q = orderSearch.value.trim();
+      if (!q) return list;
+      return list.filter(pg =>
+        pg.orders?.some(o => o.order_sn.includes(q))
+      );
+    });
+
+    const toggleProduct = (idx) => {
+      expanded.value[idx] = !expanded.value[idx];
+    };
+
+    const loadProductStats = async () => {
+      try {
+        const r = await fetch(`/api/finance/by-product?month=${currentMonth.value}`).then(r => r.json());
+        productStats.value = r;
+        await nextTick();
+        renderFinanceCharts();
+      } catch (e) {
+        console.error('load product stats error', e);
+      }
+    };
+
+    const renderFinanceCharts = () => {
+      // Daily bar chart
+      const daily = finance.value.daily;
+      if (daily?.length && financeChart.value) {
+        if (financeChartInst) financeChartInst.destroy();
+        financeChartInst = new Chart(financeChart.value, {
+          type: 'bar',
+          data: {
+            labels: daily.map(d => d.date.slice(5)),
+            datasets: [
+              { label: '金额(元)', data: daily.map(d => d.amount), backgroundColor: '#ef4444', borderRadius: 3, yAxisID: 'y' },
+              { label: '笔数', data: daily.map(d => d.count), backgroundColor: 'rgba(59,130,246,.5)', borderRadius: 3, yAxisID: 'y1' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: true,
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(51,65,85,.3)' }, ticks: { color: '#94a3b8', font: { size: 10 } }, title: { display: true, text: '金额(元)', color: '#ef4444' } },
+              y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } }, title: { display: true, text: '笔数', color: '#3b82f6' } },
+              x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 } }
+            },
+            plugins: { legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } } }
+          }
+        });
+      }
+
+      // Product pie chart
+      const products = productStats.value.products || [];
+      if (products.length && productPieChart.value) {
+        if (productPieChartInst) productPieChartInst.destroy();
+        const top = [...products].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)).slice(0, 8);
+        const pieColors = ['#ef4444','#f97316','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
+        const otherAmt = products.slice(8).reduce((s, p) => s + Math.abs(p.amount), 0);
+        const labels = top.map(p => p.name.length > 12 ? p.name.slice(0, 12) + '...' : p.name);
+        const data = top.map(p => Math.abs(p.amount));
+        if (otherAmt > 0) { labels.push('其他'); data.push(otherAmt); }
+        productPieChartInst = new Chart(productPieChart.value, {
+          type: 'doughnut',
+          data: { labels, datasets: [{ data, backgroundColor: [...pieColors.slice(0, top.length), '#475569'], borderWidth: 0 }] },
+          options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10 } } }
+          }
+        });
+      }
+    };
+
+    let timer = null;
+
+    const getStatusCount = (name) => stats.value.tracking_status[name] || 0;
+    const getStatusPercent = (name) => {
+      const total = stats.value.tracked || 1;
+      return ((stats.value.tracking_status[name] || 0) / total * 100).toFixed(1);
+    };
+    const getTransitCount = () => {
+      const exclude = ['已签收', '查询失败', '未知'];
+      let sum = 0;
+      for (const [k,v] of Object.entries(stats.value.tracking_status)) {
+        if (!exclude.includes(k)) sum += v;
+      }
+      return sum;
+    };
+
+    const statusClass = (s) => {
+      if (!s) return 'status-other';
+      if (s.includes('国内确认')) return 'status-confirmed';
+      if (s.includes('签收') || s.includes('成功') || s.includes('完成')) return 'status-signed';
+      if (s.includes('异常') || s.includes('失败') || s.includes('错误') || s.includes('ERROR')) return 'status-error';
+      if (s.includes('清关') || s.includes('配送') || s.includes('运输') || s.includes('派件') || s.includes('在途')) return 'status-transit';
+      return 'status-other';
+    };
+    const statusTimelineClass = (s) => {
+      if (s.includes('签收')) return 'signed';
+      if (s.includes('异常') || s.includes('错误')) return 'warn';
+      return '';
+    };
+
+    const refresh = async () => {
+      loading.value = true;
+      error.value = null;
+      try {
+        const [s, t] = await Promise.all([
+          fetch(`/api/stats?month=${currentMonth.value}`).then(r => { if (!r.ok) throw new Error('API error'); return r.json(); }),
+          fetch(`/api/tracking/results?page=${trackPage.value}&per_page=${trackPerPage}&status_filter=${statusFilter.value}&month=${currentMonth.value}`).then(r => r.json())
+        ]);
+        stats.value = s;
+        trackingItems.value = t.items;
+        trackingTotal.value = t.total;
+        lastUpdate.value = new Date().toLocaleTimeString('zh-CN');
+        chartReady.value = true;
+        await nextTick();
+        renderCharts();
+      } catch (e) {
+        error.value = e.message || '连接后端失败';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const loadTracking = async () => {
+      try {
+        const t = await fetch(`/api/tracking/results?page=${trackPage.value}&per_page=${trackPerPage}&status_filter=${statusFilter.value}&month=${currentMonth.value}`).then(r => r.json());
+        trackingItems.value = t.items;
+        trackingTotal.value = t.total;
+      } catch (e) {
+        console.error('load tracking error', e);
+      }
+    };
+
+    const doSearch = async () => {
+      const q = searchQuery.value.trim();
+      if (q.length < 2) return;
+      searchDone.value = false;
+      try {
+        const r = await fetch(`/api/tracking/search?q=${encodeURIComponent(q)}&month=${currentMonth.value}`).then(r => r.json());
+        searchResults.value = r;
+        searchDone.value = true;
+      } catch (e) {
+        searchResults.value = [];
+        searchDone.value = true;
+      }
+    };
+
+    const viewDetail = async (trackingNo) => {
+      detailData.value = { tracking_no: trackingNo };
+      try {
+        const r = await fetch(`/api/tracking/${trackingNo}?month=${currentMonth.value}`).then(r => { if (!r.ok) throw new Error(); return r.json(); });
+        const data = r.tracking || r;
+        detailData.value = { tracking_no: trackingNo, ...data };
+      } catch (e) {
+        detailData.value = { tracking_no: trackingNo, currentStatus: '查询失败', trackingDetails: [] };
+      }
+    };
+
+    const viewOrder = async (sn) => {
+      orderLoading.value = true;
+      orderDetail.value = null;
+      try {
+        const r = await fetch(`/api/order/${sn}?month=${currentMonth.value}`).then(r => r.json());
+        orderDetail.value = r;
+      } catch (e) {
+        orderDetail.value = { sn, error: '加载失败' };
+      } finally {
+        orderLoading.value = false;
+      }
+    };
+
+    const switchTab = () => {
+      // Re-render charts when switching to overview
+      if (activeTab.value === 'overview' && chartReady.value) {
+        nextTick(() => renderCharts());
+      }
+    };
+
+    const renderCharts = () => {
+      // State distribution donut
+      const sd = stats.value.state_distribution;
+      const labels1 = Object.keys(sd);
+      const data1 = Object.values(sd);
+      const colors = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#a855f7','#64748b'];
+      if (stateChartInst) { stateChartInst.destroy(); }
+      if (stateChart.value) {
+        stateChartInst = new Chart(stateChart.value, {
+          type: 'doughnut',
+          data: { labels: labels1, datasets: [{ data: data1, backgroundColor: colors, borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } } } }
+        });
+      }
+
+      // Tracking status donut
+      const ts = stats.value.tracking_status;
+      const labels2 = Object.keys(ts);
+      const data2 = Object.values(ts);
+      if (trackChartInst) { trackChartInst.destroy(); }
+      if (trackChart.value) {
+        trackChartInst = new Chart(trackChart.value, {
+          type: 'doughnut',
+          data: { labels: labels2, datasets: [{ data: data2, backgroundColor: ['#22c55e','#3b82f6','#f59e0b','#a855f7','#ef4444','#64748b'], borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } } } }
+        });
+      }
+
+      // Weekly bar
+      const wo = stats.value.weekly_orders;
+      const labels3 = Object.keys(wo);
+      const data3 = Object.values(wo);
+      if (weeklyChartInst) { weeklyChartInst.destroy(); }
+      if (weeklyChart.value) {
+        weeklyChartInst = new Chart(weeklyChart.value, {
+          type: 'bar',
+          data: { labels: labels3, datasets: [{ data: data3, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+          options: { responsive: true, maintainAspectRatio: true,
+            scales: { y: { beginAtZero: true, grid: { color: 'rgba(51,65,85,.3)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+                     x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    };
+
+    const toggleAutoRefresh = () => { autoRefresh.value = !autoRefresh.value; };
+
+    const switchMonth = () => {
+      // Reset caches and reload everything
+      financeInitialized.value = false;
+      finance.value = { total_count: 0, total_amount: 0, daily: [] };
+      productStats.value = { products: [], cached: 0, total_orders: 0, pending: 0 };
+      overweightData.value = { products: [], summary: {} };
+      expanded.value = {};
+      refresh();
+    };
+
+    watch(autoRefresh, (v) => {
+      if (timer) clearInterval(timer);
+      if (v) timer = setInterval(refresh, 15000);
+    });
+
+    onMounted(() => {
+      refresh();
+      if (autoRefresh.value) timer = setInterval(refresh, 15000);
+    });
+
+    onUnmounted(() => { if (timer) clearInterval(timer); });
+
+    return {
+      stats, loading, error, autoRefresh, lastUpdate, chartReady,
+      stateChart, trackChart, weeklyChart,
+      trackingItems, trackingTotal, trackPage, trackPerPage, statusFilter,
+      searchQuery, searchResults, searchDone,
+      detailData,
+      orderDetail, orderLoading,
+      activeTab,
+      currentMonth, switchMonth,
+      finance, financeLoading, financeChart, orderSearch,
+      loadFinance, loadProductStats, productStats, productPieChart,
+      expanded, groupedProducts, toggleProduct,
+      anomalyStats, anomalyItems, anomalyLoading, loadAnomalies,
+      overweightData, overweightLoading, loadOverweight,
+      getStatusCount, getStatusPercent, getTransitCount,
+      statusClass, statusTimelineClass,
+      refresh, loadTracking, doSearch, viewDetail, viewOrder, switchTab, toggleAutoRefresh
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

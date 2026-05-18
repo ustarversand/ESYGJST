@@ -1,0 +1,83 @@
+# ====================================================
+# USTAR 跨境电商ERP工具集 - Docker 部署
+# ====================================================
+# 使用方法:
+#   docker compose up -d             启动所有服务
+#   docker compose run --rm app order-push   运行订单推送
+#   docker compose logs -f pdd-cs    查看客服日志
+# ====================================================
+
+version: "3.8"
+
+services:
+  # ========== 基础组件 ==========
+  redis:
+    image: redis:7-alpine
+    container_name: ustar-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ustar-net
+
+  mongodb:
+    image: mongo:7
+    container_name: ustar-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme123}
+    networks:
+      - ustar-net
+
+  # ========== 拼多多客服后台服务 ==========
+  pdd-cs:
+    build: .
+    container_name: ustar-pdd-cs
+    restart: unless-stopped
+    command: pdd-cs
+    volumes:
+      - logs_data:/data/logs
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://admin:${MONGO_PASSWORD:-changeme123}@mongodb:27017/
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - mongodb
+    networks:
+      - ustar-net
+
+  # ========== 订单推送 Web API (可选) ==========
+  # order-api:
+  #   build: .
+  #   container_name: ustar-order-api
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
+  #   command: order-push
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - ustar-net
+
+volumes:
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local
+  logs_data:
+    driver: local
+
+networks:
+  ustar-net:
+    driver: bridge

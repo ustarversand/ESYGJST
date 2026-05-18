@@ -1,0 +1,23 @@
+# USTAR 项目依赖
+
+# HTTP
+requests>=2.25.0
+
+# 配置
+PyYAML>=5.4.0
+
+# 图像处理 (身份证上传)
+opencv-python>=4.5.0
+Pillow>=8.0.0
+numpy>=1.20.0
+
+# 模糊匹配 (拼多多客服)
+fuzzywuzzy>=0.18.0
+python-Levenshtein>=0.12.0
+
+# 定时任务
+schedule>=1.1.0
+
+# 数据库驱动
+pymongo>=4.0.0
+redis>=4.0.0

@@ -1,0 +1,1 @@
+../workflows/sync_inventory.py

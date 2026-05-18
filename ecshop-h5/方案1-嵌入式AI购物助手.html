@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>方案一：嵌入式 AI 购物助手</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; background: #020617; min-height: 100vh; padding: 2rem; color: white; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+    .diagram-container { background: rgba(15, 23, 42, 0.5); border-radius: 1rem; border: 1px solid #1e293b; padding: 1.5rem; overflow-x: auto; }
+    svg { width: 100%; min-width: 900px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: rgba(15, 23, 42, 0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.rose { background: #fb7185; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>方案一：嵌入式 AI 购物助手</h1>
+      </div>
+      <p class="subtitle">在 ECShop 页面嵌入 AI 对话窗口 — 客户边逛边聊，AI 导购推荐并协助下单</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 720">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+          </marker>
+          <marker id="green-head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#34d399" />
+          </marker>
+          <marker id="cyan-head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
+          </marker>
+          <marker id="orange-head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fb923c" />
+          </marker>
+          <marker id="violet-head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Layer 1: 客户端 -->
+        <rect x="30" y="40" width="820" height="110" rx="10" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="6,4"/>
+        <text x="42" y="56" fill="#fbbf24" font-size="10" font-weight="600">Layer 1: 客户端</text>
+
+        <rect x="50" y="65" width="140" height="70" rx="6" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+        <text x="120" y="88" fill="white" font-size="11" font-weight="600" text-anchor="middle">👤 客户</text>
+        <text x="120" y="104" fill="#94a3b8" font-size="9" text-anchor="middle">浏览器 / 手机</text>
+        <text x="120" y="120" fill="#94a3b8" font-size="8" text-anchor="middle">打开商城浏览</text>
+
+        <rect x="240" y="65" width="200" height="70" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="340" y="88" fill="white" font-size="11" font-weight="600" text-anchor="middle">🌐 ECShop 商城页面</text>
+        <text x="340" y="104" fill="#94a3b8" font-size="9" text-anchor="middle">商品列表 / 详情页 / 购物车</text>
+        <text x="340" y="120" fill="#22d3ee" font-size="8" text-anchor="middle">嵌入 AI 聊天按钮 &lt;浮窗&gt;</text>
+
+        <rect x="490" y="65" width="170" height="70" rx="6" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+        <text x="575" y="88" fill="white" font-size="11" font-weight="600" text-anchor="middle">💬 AI 对话浮窗</text>
+        <text x="575" y="104" fill="#94a3b8" font-size="9" text-anchor="middle">JS 浮动聊天组件</text>
+        <text x="575" y="120" fill="#22d3ee" font-size="8" text-anchor="middle">WebSocket / SSE 实时通信</text>
+
+        <!-- Arrow: 客户→商城 -->
+        <line x1="190" y1="100" x2="238" y2="100" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#cyan-head)"/>
+        <text x="214" y="94" fill="#94a3b8" font-size="8" text-anchor="middle">浏览</text>
+
+        <!-- Arrow: 客户→AI -->
+        <line x1="120" y1="135" x2="120" y2="175" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="120" y1="175" x2="575" y2="175" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="575" y1="135" x2="575" y2="173" stroke="#fb923c" stroke-width="1.5" marker-end="url(#orange-head)"/>
+        <text x="348" y="170" fill="#fb923c" font-size="9" text-anchor="middle">🔁 自然语言对话（咨询/推荐/下单）</text>
+
+        <!-- Layer 2: AI 中间件 -->
+        <rect x="30" y="210" width="820" height="190" rx="10" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="6,4"/>
+        <text x="42" y="226" fill="#fbbf24" font-size="10" font-weight="600">Layer 2: AI 购物助手服务</text>
+
+        <!-- Python 服务主体 -->
+        <rect x="50" y="240" width="210" height="80" rx="8" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="155" y="262" fill="white" font-size="11" font-weight="600" text-anchor="middle">🤖 AI 购物 Agent 服务</text>
+        <text x="155" y="278" fill="#94a3b8" font-size="9" text-anchor="middle">Python FastAPI</text>
+        <text x="155" y="294" fill="#94a3b8" font-size="9" text-anchor="middle">接收对话 → 调用 LLM → 执行动作</text>
+        <text x="155" y="310" fill="#34d399" font-size="8" text-anchor="middle">WebSocket :8765 / REST :8000</text>
+
+        <!-- LLM 连接 -->
+        <rect x="300" y="255" width="150" height="50" rx="6" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="375" y="275" fill="white" font-size="11" font-weight="600" text-anchor="middle">🧠 LLM 大模型</text>
+        <text x="375" y="293" fill="#94a3b8" font-size="9" text-anchor="middle">MiniMax / DeepSeek</text>
+
+        <line x1="260" y1="280" x2="298" y2="280" stroke="#34d399" stroke-width="1.5" marker-end="url(#green-head)"/>
+        <text x="279" y="274" fill="#94a3b8" font-size="8" text-anchor="middle">推理</text>
+
+        <!-- Agent Tools / Skill 层 -->
+        <rect x="490" y="255" width="150" height="120" rx="8" fill="rgba(136, 19, 55, 0.3)" stroke="#fb7185" stroke-width="1"/>
+        <text x="565" y="274" fill="#fb7185" font-size="11" font-weight="600" text-anchor="middle">🔧 Agent 工具集</text>
+        <text x="565" y="292" fill="#94a3b8" font-size="8" text-anchor="middle">• 商品搜索（query）</text>
+        <text x="565" y="306" fill="#94a3b8" font-size="8" text-anchor="middle">• 商品详情（detail）</text>
+        <text x="565" y="320" fill="#94a3b8" font-size="8" text-anchor="middle">• 加入购物车（add_cart）</text>
+        <text x="565" y="334" fill="#94a3b8" font-size="8" text-anchor="middle">• 下单结算（checkout）</text>
+        <text x="565" y="348" fill="#94a3b8" font-size="8" text-anchor="middle">• 查询订单（order）</text>
+        <text x="565" y="362" fill="#fb7185" font-size="7" text-anchor="middle">Function Calling 调用</text>
+
+        <line x1="450" y1="280" x2="488" y2="280" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="469" y="274" fill="#94a3b8" font-size="8" text-anchor="middle">调用</text>
+
+        <!-- 对话记忆 -->
+        <rect x="680" y="255" width="140" height="50" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="750" y="275" fill="white" font-size="11" font-weight="600" text-anchor="middle">💾 对话记忆</text>
+        <text x="750" y="293" fill="#94a3b8" font-size="9" text-anchor="middle">Redis / SQLite</text>
+
+        <line x1="640" y1="280" x2="678" y2="280" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <!-- Arrow: Agent → ECShop -->
+        <line x1="155" y1="320" x2="155" y2="420" stroke="#34d399" stroke-width="1.5" marker-end="url(#green-head)"/>
+        <text x="168" y="370" fill="#94a3b8" font-size="8">API 调用</text>
+
+        <!-- Layer 3: ECShop + 数据后端 -->
+        <rect x="30" y="440" width="820" height="160" rx="10" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="6,4"/>
+        <text x="42" y="456" fill="#fbbf24" font-size="10" font-weight="600">Layer 3: ECShop 后端 &amp; 数据</text>
+
+        <rect x="50" y="475" width="160" height="55" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="130" y="496" fill="white" font-size="11" font-weight="600" text-anchor="middle">🔌 ECShop API</text>
+        <text x="130" y="515" fill="#94a3b8" font-size="9" text-anchor="middle">Laravel Lumen</text>
+        <text x="130" y="524" fill="#34d399" font-size="7" text-anchor="middle">商品/购物车/订单接口</text>
+
+        <rect x="260" y="475" width="160" height="55" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="340" y="496" fill="white" font-size="11" font-weight="600" text-anchor="middle">🗄️ MySQL 数据库</text>
+        <text x="340" y="515" fill="#94a3b8" font-size="9" text-anchor="middle">ecshop_renzheng</text>
+        <text x="340" y="524" fill="#a78bfa" font-size="7" text-anchor="middle">ecs_goods / ecs_cart / ecs_order_info</text>
+
+        <rect x="470" y="475" width="160" height="55" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="550" y="496" fill="white" font-size="11" font-weight="600" text-anchor="middle">🔄 ECShop PHP</text>
+        <text x="550" y="515" fill="#94a3b8" font-size="9" text-anchor="middle">前端商城核心</text>
+
+        <!-- Arrow: API→DB -->
+        <line x1="210" y1="502" x2="258" y2="502" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#violet-head)"/>
+        <line x1="420" y1="502" x2="468" y2="502" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+        <!-- Layer 4: 聚水潭 ERP -->
+        <rect x="30" y="630" width="820" height="70" rx="10" fill="rgba(251, 191, 36, 0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="6,4"/>
+        <text x="42" y="646" fill="#fbbf24" font-size="10" font-weight="600">Layer 4: 聚水潭 ERP 对接</text>
+
+        <rect x="50" y="655" width="250" height="40" rx="6" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="175" y="676" fill="white" font-size="11" font-weight="600" text-anchor="middle">📦 聚水潭 ERP 订单同步（已有）</text>
+        <text x="175" y="688" fill="#94a3b8" font-size="7" text-anchor="middle">JST API → order_push_system</text>
+
+        <line x1="340" y1="675" x2="470" y2="675" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="470" y1="675" x2="470" y2="530" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+        <text x="405" y="669" fill="#94a3b8" font-size="7" text-anchor="middle">订单同步（可选）</text>
+
+        <!-- Legend -->
+        <text x="720" y="460" fill="white" font-size="10" font-weight="600">图例</text>
+        <rect x="720" y="472" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="742" y="480" fill="#94a3b8" font-size="8">前端</text>
+        <rect x="720" y="488" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+        <text x="742" y="496" fill="#94a3b8" font-size="8">后端服务</text>
+        <rect x="720" y="504" width="16" height="10" rx="2" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="742" y="512" fill="#94a3b8" font-size="8">LLM / 外部</text>
+        <rect x="720" y="520" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="742" y="528" fill="#94a3b8" font-size="8">数据库</text>
+        <rect x="720" y="536" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.3)" stroke="#fb7185" stroke-width="1"/>
+        <text x="742" y="544" fill="#94a3b8" font-size="8">工具 / SDK</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot cyan"></div>
+          <h3>核心流程</h3>
+        </div>
+        <ul>
+          <li>• 客户打开 ECShop 商城页面</li>
+          <li>• 右下角出现 AI 助手浮窗按钮</li>
+          <li>• 点击后弹出聊天窗口</li>
+          <li>• 客户自然语言描述需求：</li>
+          <li>&nbsp;&nbsp;"给我推荐一款德国奶粉"</li>
+          <li>&nbsp;&nbsp;"这个商品有优惠吗？"</li>
+          <li>&nbsp;&nbsp;"帮我下单买 2 罐"</li>
+          <li>• AI Agent 通过 Function Call 操作商城</li>
+          <li>• 搜索商品 → 加购物车 → 生成订单</li>
+          <li>• 客户确认后直接下单</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>技术栈</h3>
+        </div>
+        <ul>
+          <li>• 前端：JS 浮窗组件（vanilla / React）</li>
+          <li>• 通信：WebSocket 实时双向通信</li>
+          <li>• AI 代理：Python FastAPI 服务</li>
+          <li>• LLM：MiniMax 或 DeepSeek</li>
+          <li>• Function Calling：tool-based agent</li>
+          <li>• 对话记忆：Redis / SQLite</li>
+          <li>• 对接：ECShop Lumen API</li>
+          <li>• WebSocket 库：`python-socketio`</li>
+          <li>• 部署：Docker 容器（现有环境）</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>优缺点</h3>
+        </div>
+        <ul>
+          <li>✅ 客户无感接入，不用离开商城</li>
+          <li>✅ 沉浸式购物体验，边逛边聊</li>
+          <li>✅ 降低客户决策成本，提高转化率</li>
+          <li>✅ 可收集对话数据优化推荐</li>
+          <li>⚠️ 需嵌入 ECShop 页面（改 PHP 模板）</li>
+          <li>⚠️ 实时 WebSocket 增加服务器开销</li>
+          <li>⚠️ 移动端适配需要额外工作</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer">方案一：嵌入式 AI 购物助手 • ECShop AI Agent 项目 • Hermes Agent</p>
+  </div>
+</body>
+</html>
