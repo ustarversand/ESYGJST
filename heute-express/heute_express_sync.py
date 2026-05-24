@@ -61,17 +61,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger("heute_sync")
 
-# ─── 账号配置 ────────────────────────────────────────────────────────────
+# ─── 账号配置（支持环境变量覆盖）────────────────────────────────────────────
 PROFILES = {
     "default": {
-        "username": "USTAR",
-        "password": "Hilden11031980!",
+        "username": os.environ.get('HEUTE_USERNAME', "USTAR"),
+        "password": os.environ.get('HEUTE_PASSWORD', "Hilden11031980!"),
         "db_name": "heute_express_ustar.db",
-        "sender": None,  # None=拉取该账号下全部寄件人
+        "sender": None,
     },
     "mscj": {
-        "username": "MSCJ",
-        "password": "Mt123456789!",
+        "username": os.environ.get('MSCJ_USERNAME', "MSCJ"),
+        "password": os.environ.get('MSCJ_PASSWORD', "Mt123456789!"),
         "db_name": "heute_express_mscj.db",
         "sender": None,
     },
