@@ -28,6 +28,7 @@ order_sync.log
 # Data / secrets
 .env
 .env.*
+!.env.example
 *.token
 *.cred
 *.cookies

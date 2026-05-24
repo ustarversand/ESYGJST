@@ -1,0 +1,24 @@
+services:
+  zhiyouguanjia:
+    build: .
+    container_name: zhiyouguanjia
+    restart: unless-stopped
+    ports:
+      - "${ZYGJ_PORT:-8899}:8899"
+    environment:
+      - JST_APP_KEY=${JST_APP_KEY}
+      - JST_APP_SECRET=${JST_APP_SECRET}
+      - JST_TOKEN=${JST_TOKEN}
+      - ZYGJ_PORT=${ZYGJ_PORT:-8899}
+    volumes:
+      # 数据持久化（SQLite + 上传文件）
+      - zhiyouguanjia_data:/app/data
+      - zhiyouguanjia_uploads:/app/uploads
+      - zhiyouguanjia_idcard:/app/身份证上传
+      # 代码热重载（开发用，生产可注释掉）
+      # - ./templates:/app/templates
+
+volumes:
+  zhiyouguanjia_data:
+  zhiyouguanjia_uploads:
+  zhiyouguanjia_idcard:

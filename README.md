@@ -32,6 +32,12 @@ ESYGJST/
 │   ├── batch_track.py         # 批量物流查询
 │   ├── scan_anomalies.py      # 异常订单扫描
 │   └── data/                  # 数据库 & 缓存
+├── zhiyouguanjia/          # 直邮管家 — Flask推单Web系统
+│   ├── app.py              # Flask Web (17 API routes)
+│   ├── push_engine.py      # 推单引擎（JST API + SKU匹配 + 身份证校验）
+│   ├── order_parser/       # 一段话智能解析器
+│   ├── idcard_handler.py   # 身份证OCR识别 + 上传认证
+│   └── ...
 ├── idcard-auth/           # 身份证认证系统
 │   ├── auth_system.py     # 认证服务
 │   ├── idcard_cli.py      # CLI 接口

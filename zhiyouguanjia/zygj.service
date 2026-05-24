@@ -1,0 +1,19 @@
+[Unit]
+Description=直邮管家 ZYGJ Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/data/workspace/zhiyouguanjia
+Environment="JST_APP_KEY=d561deb348274f1ba3505ec4578870fd"
+Environment="JST_APP_SECRET=84ad2c023b9b49378b1161ea569e383c"
+Environment="JST_TOKEN=cfda23ff97664494bc6fc5ab46f8ea48"
+ExecStart=/usr/bin/python3 /opt/data/workspace/zhiyouguanjia/app.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/opt/data/workspace/zhiyouguanjia/zygj.log
+StandardError=append:/opt/data/workspace/zhiyouguanjia/zygj.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,43 @@
+# 直邮管家 — .gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# Environment
+.env
+.secret_key
+
+# Database (persistent data - use Docker volume)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/.heute_token
+data/.track_token
+data/pushed_orders.json
+data/products.json
+
+# Logs
+*.log
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads
+uploads/*.xlsx
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.py
+
+# Static test files
+static/*.xlsx

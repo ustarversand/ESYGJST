@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <title>直邮管家</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1a2e 0,#16213e 50%,#0f3460 100%);color:#fff;padding:20px;text-align:center}
+.header h1{font-size:24px;margin-bottom:4px}
+.header p{font-size:13px;opacity:.7}
+.container{max-width:960px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:16px;margin-bottom:12px;color:#1a1a2e;display:flex;align-items:center;gap:8px}
+.card h2 .badge{background:#0f3460;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:12px;text-align:center;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:.2s;background:#fff}
+.tab.active{border-color:#0f3460;color:#0f3460;background:#eef4ff}
+.tab:hover{border-color:#0f3460}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-group label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;transition:.2s;background:#fff}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#0f3460;box-shadow:0 0 0 3px rgba(15,52,96,.1)}
+.form-group textarea{resize:vertical;min-height:60px}
+
+.smart-paste{background:#f8f9ff;border:2px dashed #0f3460;border-radius:12px;padding:16px;margin-bottom:16px}
+.smart-paste textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit}
+.smart-paste textarea:focus{outline:none;border-color:#0f3460}
+.example-tags{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.example-tag{display:inline-block;padding:4px 12px;border-radius:16px;font-size:12px;background:#eef2ff;color:#4f46e5;cursor:pointer;transition:.2s;border:1px solid transparent}
+.example-tag:hover{background:#dde4ff}
+.example-tag.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary{background:#0f3460;color:#fff}
+.btn-primary:hover{background:#1a1a2e;transform:translateY(-1px)}
+.btn-primary:disabled{background:#999;cursor:not-allowed;transform:none}
+.btn-secondary{background:#f0f2f5;color:#333}
+.btn-secondary:hover{background:#e0e0e0}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-success{background:#10b981;color:#fff}
+.btn-success:hover{background:#059669}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-danger:hover{background:#dc2626}
+
+.btn-row{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.upload-zone{border:2px dashed #d0d0d0;border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:.2s;background:#fafafa}
+.upload-zone:hover,.upload-zone.dragover{border-color:#0f3460;background:#eef4ff}
+.upload-zone .icon{font-size:40px;margin-bottom:8px}
+.upload-zone p{font-size:14px;color:#666}
+.upload-zone .hint{font-size:12px;color:#999;margin-top:4px}
+
+.result-box{background:#f8f9fa;border-radius:8px;padding:14px;margin-top:12px;font-size:13px;max-height:400px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+.result-box.success{border-left:4px solid #10b981}
+.result-box.error{border-left:4px solid #ef4444}
+.result-box .item{padding:8px 0;border-bottom:1px solid #eee}
+.result-box .item:last-child{border:none}
+.result-box .item .status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.result-box .item .status.ok{background:#d1fae5;color:#065f46}
+.result-box .item .status.fail{background:#fee2e2;color:#991b1b}
+
+.shop-select{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.shop-tag{padding:6px 14px;border:1.5px solid #e0e0e0;border-radius:20px;font-size:13px;cursor:pointer;transition:.2s}
+.shop-tag.active{border-color:#0f3460;background:#eef4ff;color:#0f3460;font-weight:600}
+.shop-tag:hover{border-color:#0f3460}
+
+.status-bar{display:flex;gap:16px;justify-content:center;margin-bottom:16px}
+.status-item{text-align:center}
+.status-item .num{font-size:28px;font-weight:700;color:#0f3460}
+.status-item .label{font-size:11px;color:#666}
+
+/* 物流状态颜色 */
+.status-5{color:#059669;font-weight:600}      /* 签收 - 绿色 */
+.status-4{color:#2563eb;font-weight:600}      /* 顺丰待揽收 - 蓝色 */
+.status-3{color:#7c3aed;font-weight:600}      /* 国际运输 - 紫色 */
+.status-2{color:#0284c7;font-weight:600}      /* 待入库 - 天蓝 */
+.status-1{color:#d97706;font-weight:600}      /* 待支付 - 橙色 */
+.status-0{color:#dc2626;font-weight:600}      /* 已作废 - 红色 */
+.status--6{color:#6b7280;font-weight:600}     /* 已撤销 - 灰色 */
+.hidden{display:none}
+.loading{opacity:.6;pointer-events:none}
+
+/* 多商品表格 */
+.item-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+.item-table th{padding:8px 6px;background:#f0f2f5;border-bottom:2px solid #e0e0e0;text-align:left;font-weight:600}
+.item-table td{padding:6px;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+.item-table input{width:100%;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:13px}
+.item-table input:focus{outline:none;border-color:#0f3460}
+.item-table .del-btn{background:#fee2e2;border:none;color:#ef4444;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:13px}
+
+/* 身份证上传区 */
+.idcard-section{background:#f8f9ff;border:1px solid #d0d0ff;border-radius:12px;padding:16px;margin-top:12px}
+.idcard-section h3{font-size:14px;color:#0f3460;margin-bottom:10px}
+.idcard-upload-row{display:flex;gap:12px;margin-bottom:10px}
+.idcard-slot{flex:1;border:2px dashed #d0d0d0;border-radius:10px;padding:16px;text-align:center;cursor:pointer;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fafafa;transition:.2s;position:relative}
+.idcard-slot:hover{border-color:#0f3460;background:#eef4ff}
+.idcard-slot img{max-width:100%;max-height:120px;border-radius:6px}
+.idcard-slot .slot-label{font-size:12px;color:#666;margin-top:4px}
+.idcard-slot .slot-icon{font-size:28px}
+.idcard-result{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;animation:slideIn .3s ease}
+.idcard-result.error{background:#fef2f2;border-color:#fca5a5}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* 解析预览卡片 */
+.parse-preview{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;margin-bottom:12px;animation:slideIn .3s ease}
+.parse-preview.error{background:#fef2f2;border-color:#fca5a5}
+.parse-preview .pp-row{display:flex;gap:8px;margin:4px 0;font-size:13px}
+.parse-preview .pp-label{color:#666;min-width:60px;flex-shrink:0}
+.parse-preview .pp-value{font-weight:500;color:#1a1a2e}
+.parse-preview .pp-items{margin-top:6px;padding-top:6px;border-top:1px dashed #d1d5db}
+.parse-preview .pp-item{display:inline-block;background:#eef4ff;border-radius:6px;padding:3px 10px;margin:2px 4px 2px 0;font-size:12px}
+
+/* 浮动通知 Toast */
+.toast-overlay{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;max-width:90%;min-width:280px;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:500;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:toastIn .35s ease;word-break:break-all}
+.toast-overlay.success{background:#059669;color:#fff}
+.toast-overlay.error{background:#dc2626;color:#fff}
+.toast-overlay.info{background:#1e40af;color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* 商品自动补全下拉 */
+.ac-wrapper{position:relative;display:block}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;z-index:9999;background:#fff;border:1.5px solid #0f3460;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:220px;overflow-y:auto;font-size:13px}
+.ac-dropdown .ac-item{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f2f5;transition:.1s}
+.ac-dropdown .ac-item:last-child{border:none}
+.ac-dropdown .ac-item:hover,.ac-dropdown .ac-item.active{background:#eef4ff;color:#0f3460}
+.ac-dropdown .ac-item .ac-sku{font-family:monospace;font-size:11px;color:#999;margin-left:8px;white-space:nowrap}
+.ac-dropdown .ac-item .ac-tag{display:inline-block;padding:0 6px;border-radius:3px;font-size:10px;color:#666;background:#f0f2f5;margin-left:4px;white-space:nowrap}
+
+@media(max-width:600px){.form-grid,.idcard-upload-row{grid-template-columns:1fr}.idcard-upload-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>💚 直邮管家</h1>
+  <p>德国直邮产品推送系统 &nbsp;|&nbsp; <span id="header-time">{{ now }}</span></p>
+  <div style="margin-top:10px;font-size:12px;display:flex;justify-content:center;align-items:center;gap:12px">
+    <span style="opacity:.9">👤 {{ current_user.get('username','') }}</span>
+    {% if current_user.get('shop_key') %}
+    <span style="background:rgba(255,255,255,.15);padding:2px 10px;border-radius:10px">🏪 {{ current_user.get('shop_key') }}</span>
+    {% else %}
+    <span style="background:rgba(255,255,255,.15);padding:2px 10px;border-radius:10px;opacity:.7">管理员</span>
+    {% endif %}
+    <a href="#" onclick="logout()" style="color:#ffd700;text-decoration:none;margin-left:8px" id="logout-link">退出</a>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 快捷状态 -->
+  <div class="status-bar">
+    <div class="status-item"><div class="num" id="stat-total">-</div><div class="label">店铺数</div></div>
+    <div class="status-item"><div class="num" id="stat-default">-</div><div class="label">默认店铺</div></div>
+    <div class="status-item"><div class="num" id="stat-jst">⚪</div><div class="label">JST连接</div></div>
+  </div>
+
+  <!-- Tab 切换 -->
+  <div class="tabs">
+    <div class="tab active" data-tab="quick" onclick="switchTab('quick')">⚡ 快速下单</div>
+    <div class="tab" data-tab="ownshop" onclick="switchTab('ownshop')">🏪 自有店铺</div>
+    <div class="tab" data-tab="excel" onclick="switchTab('excel')">📄 Excel 批量</div>
+    <div class="tab" data-tab="logistics" onclick="switchTab('logistics')">🔍 单号查询</div>
+  </div>
+
+  <!-- ===== 快速下单 ===== -->
+  <div class="card" id="tab-quick">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">⚡ 快速下单</h2>
+      <span style="font-size:12px;color:#666;padding:4px 10px;background:#eef4ff;border-radius:12px" id="quick-shop-badge">店铺: <span id="quick-shop-name">AUSTARWX</span></span>
+    </div>
+
+    <!-- 智能粘贴区 -->
+    <div class="smart-paste">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:14px;color:#0f3460">⚡ 一段话智能下单</strong>
+        <span style="font-size:11px;color:#999">粘贴聊天消息，自动解析</span>
+      </div>
+      <!-- 示例标签 -->
+      <div class="example-tags" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <span class="example-tag active" data-example="free" onclick="fillExample('free')">📝 自由文本</span>
+      </div>
+      <textarea id="smart-input" placeholder="粘贴或选择示例文本，自动解析为订单"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="parseSmartText()">🔍 解析并填入</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('smart-input').value=''">清空</button>
+      </div>
+    </div>
+
+    <!-- 解析预览卡片 -->
+    <div id="parse-preview" class="hidden"></div>
+
+    <!-- 订单表单 -->
+    <div class="form-grid">
+      <div class="form-group"><label>订单号（可选）</label><input id="f-so-id" placeholder="留空自动生成"></div>
+      <div class="form-group"><label>收件人 *</label><input id="f-name" placeholder="张三" onblur="autoMatchIdcard(this.value)"></div>
+      <div class="form-group"><label>电话 *</label><input id="f-phone" placeholder="13800138000"></div>
+      <div class="form-group"><label>身份证号 *</label><input id="f-idcard" placeholder="18位（OCR自动识别后填入）"></div>
+      <div class="full" style="display:flex;gap:12px">
+        <div class="form-group" style="flex:1"><label>省 *</label><input id="f-state" placeholder="广东省"></div>
+        <div class="form-group" style="flex:1"><label>市 *</label><input id="f-city" placeholder="广州市"></div>
+        <div class="form-group" style="flex:1"><label>区 *</label><input id="f-district" placeholder="天河区"></div>
+      </div>
+      <div class="form-group full"><label>详细地址 *</label><input id="f-address" placeholder="天河路1号xxxx"></div>
+      <div class="form-group"><label>支付金额</label><input id="f-pay" type="number" value="0" step="0.01" placeholder="留空=数量×单价"></div>
+      <div class="form-group"><label>备注</label><textarea id="f-remark" rows="2" placeholder="买家留言"></textarea></div>
+    </div>
+
+    <!-- 多商品表格 -->
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:14px;color:#333">🛒 商品明细</strong>
+        <button class="btn btn-secondary btn-sm" onclick="addItemRow()">＋ 添加商品</button>
+      </div>
+      <table class="item-table">
+        <thead><tr>
+          <th style="width:22%">SKU编码</th>
+          <th style="width:32%">商品名称</th>
+          <th style="width:12%">数量</th>
+          <th style="width:16%">单价</th>
+          <th style="width:8%"></th>
+        </tr></thead>
+        <tbody id="item-rows">
+          <tr>
+            <td><input class="item-sku" placeholder="SKU编号"></td>
+            <td><div class="ac-wrapper"><input class="item-name" placeholder="商品名称（自动匹配）"><div class="ac-dropdown" style="display:none"></div></div></td>
+            <td><input class="item-qty" type="number" value="1" min="1"></td>
+            <td><input class="item-price" type="number" value="0" step="0.01"></td>
+            <td><button class="del-btn" onclick="this.closest('tr').remove()">✕</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 身份证上传区 -->
+    <div class="idcard-section">
+      <h3>🪪 身份证认证</h3>
+      <div class="idcard-upload-row">
+        <label class="idcard-slot" id="idcard-front">
+          <input type="file" id="idcard-front-input" accept="image/*" style="display:none" onchange="previewIdcard(this, 'front')">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">身份证正面<br><small>（人像面）</small></div>
+        </label>
+        <label class="idcard-slot" id="idcard-reverse">
+          <input type="file" id="idcard-reverse-input" accept="image/*" style="display:none" onchange="previewIdcard(this, 'reverse')">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">身份证反面<br><small>（国徽面）</small></div>
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn btn-primary btn-sm" onclick="ocrIdcard()">🔍 识别身份证</button>
+        <button class="btn btn-success btn-sm" onclick="uploadIdcard()">📤 上传认证</button>
+      </div>
+      <div id="idcard-result" class="hidden"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-sm" onclick="clearForm('quick')">清空</button>
+      <button class="btn btn-primary" id="btn-push" onclick="pushOrder('quick')">🚀 推送到聚水潭</button>
+    </div>
+    <div id="result-quick" class="hidden"></div>
+  </div>
+
+  <!-- ===== 自有店铺 ===== -->
+  <div class="card" id="tab-ownshop" style="display:none">
+    <h2>🏪 自有店铺</h2>
+
+    <div style="background:#fff8e6;border:1px solid #f0d080;border-radius:10px;padding:12px 16px;margin-bottom:14px">
+      {% if current_user.get('shop_key') %}
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">🔒</span>
+        <div>
+          <div style="font-size:13px;color:#92600a;font-weight:500">已锁定店铺</div>
+          <div style="font-size:16px;color:#0f3460;font-weight:700;margin-top:2px">{{ current_user.get('shop_key') }}</div>
+        </div>
+      </div>
+      {% else %}
+      <div style="font-size:12px;color:#92600a;margin-bottom:8px">输入客户名称自动识别，或手动选择</div>
+      <div style="position:relative">
+        <input id="ownshop-search" placeholder="输入客户名称，如 武姐、AUSTARWX、沐浴阳光..." style="width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        <div id="ownshop-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;background:#fff;border:1.5px solid #0f3460;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:260px;overflow-y:auto;font-size:13px"></div>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:#666" id="ownshop-selected">未选择店铺</div>
+      {% endif %}
+    </div>
+
+    <!-- 智能粘贴区 -->
+    <div class="smart-paste">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:14px;color:#0f3460">⚡ 一段话智能下单</strong>
+        <span style="font-size:11px;color:#999">粘贴聊天消息，自动解析</span>
+      </div>
+      <textarea id="smart-input-own" placeholder="粘贴或选择示例文本，自动解析为订单"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="parseSmartText('own')">🔍 解析并填入</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('smart-input-own').value=''">清空</button>
+      </div>
+    </div>
+
+    <!-- 解析预览卡片 -->
+    <div id="parse-preview-own" class="hidden"></div>
+
+    <!-- 订单表单 -->
+    <div class="form-grid">
+      <div class="form-group"><label>订单号（可选）</label><input id="f-so-id-own" placeholder="留空自动生成"></div>
+      <div class="form-group"><label>收件人 *</label><input id="f-name-own" placeholder="张三" onblur="autoMatchIdcard(this.value, 'own')"></div>
+      <div class="form-group"><label>电话 *</label><input id="f-phone-own" placeholder="13800138000"></div>
+      <div class="form-group"><label>身份证号 *</label><input id="f-idcard-own" placeholder="18位（OCR自动识别后填入）"></div>
+      <div class="full" style="display:flex;gap:12px">
+        <div class="form-group" style="flex:1"><label>省 *</label><input id="f-state-own" placeholder="广东省"></div>
+        <div class="form-group" style="flex:1"><label>市 *</label><input id="f-city-own" placeholder="广州市"></div>
+        <div class="form-group" style="flex:1"><label>区 *</label><input id="f-district-own" placeholder="天河区"></div>
+      </div>
+      <div class="form-group full"><label>详细地址 *</label><input id="f-address-own" placeholder="天河路1号xxxx"></div>
+      <div class="form-group"><label>支付金额</label><input id="f-pay-own" type="number" value="0" step="0.01" placeholder="留空=数量×单价"></div>
+      <div class="form-group"><label>备注</label><textarea id="f-remark-own" rows="2" placeholder="买家留言"></textarea></div>
+    </div>
+
+    <!-- 多商品表格 -->
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:14px;color:#333">🛒 商品明细</strong>
+        <button class="btn btn-secondary btn-sm" onclick="addItemRow('own')">＋ 添加商品</button>
+      </div>
+      <table class="item-table">
+        <thead><tr>
+          <th style="width:22%">SKU编码</th>
+          <th style="width:32%">商品名称</th>
+          <th style="width:12%">数量</th>
+          <th style="width:16%">单价</th>
+          <th style="width:8%"></th>
+        </tr></thead>
+        <tbody id="item-rows-own">
+          <tr>
+            <td><input class="item-sku" placeholder="SKU编号"></td>
+            <td><div class="ac-wrapper"><input class="item-name" placeholder="商品名称（自动匹配）"><div class="ac-dropdown" style="display:none"></div></div></td>
+            <td><input class="item-qty" type="number" value="1" min="1"></td>
+            <td><input class="item-price" type="number" value="0" step="0.01"></td>
+            <td><button class="del-btn" onclick="this.closest('tr').remove()">✕</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 身份证上传区 -->
+    <div class="idcard-section">
+      <h3>🪪 身份证认证</h3>
+      <div class="idcard-upload-row">
+        <label class="idcard-slot" id="idcard-front-own">
+          <input type="file" id="idcard-front-input-own" accept="image/*" style="display:none" onchange="previewIdcard(this, 'front', 'own')">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">身份证正面<br><small>（人像面）</small></div>
+        </label>
+        <label class="idcard-slot" id="idcard-reverse-own">
+          <input type="file" id="idcard-reverse-input-own" accept="image/*" style="display:none" onchange="previewIdcard(this, 'reverse', 'own')">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">身份证反面<br><small>（国徽面）</small></div>
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn btn-primary btn-sm" onclick="ocrIdcard('own')">🔍 识别身份证</button>
+        <button class="btn btn-success btn-sm" onclick="uploadIdcard('own')">📤 上传认证</button>
+      </div>
+      <div id="idcard-result-own" class="hidden"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-sm" onclick="clearForm('own')">清空</button>
+      <button class="btn btn-primary" id="btn-push-own" onclick="pushOrder('own')">🚀 推送到聚水潭</button>
+    </div>
+    <div id="result-own" class="hidden"></div>
+  </div>
+
+  <!-- ===== Excel 批量 ===== -->
+  <div class="card" id="tab-excel" style="display:none">
+    <h2>📄 Excel 批量推单</h2>
+    <div class="shop-select" id="shop-select-excel">
+      <div class="shop-tag active" data-shop="" onclick="selectShop(this, 'excel')">📋 使用Excel列</div>
+      {% for s in shops %}
+      <div class="shop-tag" data-shop="{{ s.key }}" onclick="selectShop(this, 'excel')">{{ s.name }}</div>
+      {% endfor %}
+    </div>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📤</div>
+      <p><strong>点击上传 Excel 文件</strong></p>
+      <p class="hint">支持 .xlsx / .xls &nbsp;|&nbsp; 表头列名: 收件人, 电话, 地址, 商品编码, 数量...</p>
+    </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="uploadExcel()">
+    <div id="result-excel" class="hidden"></div>
+  </div>
+
+  <!-- ===== 物流查询 ===== -->
+  <div class="card" id="tab-logistics" style="display:none">
+    <h2>🔍 单号查询（按收件人）</h2>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>收件人姓名</label>
+        <input type="text" id="logis-name" placeholder="输入收件人姓名，如 示例客户">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="queryLogistics()">🔍 查询单号</button>
+
+    <div id="result-logistics" class="hidden" style="margin-top:16px"></div>
+  </div>
+
+
+
+<script>
+const _SHOPS = {{ shops | tojson | safe }};
+const _currentUser = {{ current_user | tojson | safe }};
+let _lastShopKey = _SHOPS.length > 0 ? _SHOPS[0].key : ( _currentUser.shop_key || 'AUSTARWX' );
+
+// ===== 退出登录 =====
+async function logout() {
+  await fetch('/api/logout', { method:'POST' });
+  window.location.href = '/login';
+}
+
+// ===== Tab 切换 =====
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.card').forEach(c => c.style.display = 'none');
+  const tab = document.querySelector(`.tab[data-tab="${name}"]`);
+  if (tab) tab.classList.add('active');
+  document.getElementById(`tab-${name}`).style.display = 'block';
+  // 切换时更新快速下单的店铺名
+  if (name === 'quick') {
+    const shop = _SHOPS.find(s => s.key === _lastShopKey);
+    document.getElementById('quick-shop-name').textContent = shop ? shop.name : _lastShopKey;
+  }
+}
+
+// ===== 自有店铺智能识别 =====
+function setupOwnshopAutoComplete() {
+  const input = document.getElementById('ownshop-search');
+  const dropdown = document.getElementById('ownshop-dropdown');
+  input.addEventListener('input', function() {
+    const val = this.value.trim().toLowerCase();
+    if (!val) { dropdown.style.display = 'none'; return; }
+    const matches = _SHOPS.filter(s =>
+      s.key.toLowerCase().includes(val) ||
+      (s.name && s.name.toLowerCase().includes(val))
+    );
+    if (matches.length === 0) { dropdown.style.display = 'none'; return; }
+    dropdown.innerHTML = matches.map(s =>
+      `<div class="ac-item" data-shop="${s.key}" style="padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;border-bottom:1px solid #f0f2f5">
+        <span>${s.name || s.key}</span>
+        <span style="color:#999;font-size:11px">${s.id || ''}</span>
+      </div>`
+    ).join('');
+    dropdown.style.display = 'block';
+    dropdown.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('click', function() {
+        const key = this.dataset.shop;
+        const shop = _SHOPS.find(s => s.key === key);
+        _lastShopKey = key;
+        input.value = shop ? shop.name : key;
+        document.getElementById('ownshop-selected').innerHTML = `✅ 已选择: <strong>${shop ? shop.name : key}</strong> <small style="color:#999">(ID: ${shop ? shop.id : ''})</small>`;
+        dropdown.style.display = 'none';
+      });
+      el.addEventListener('mouseenter', function() { this.style.background = '#eef4ff'; });
+      el.addEventListener('mouseleave', function() { this.style.background = ''; });
+    });
+  });
+  input.addEventListener('blur', function() {
+    setTimeout(() => { dropdown.style.display = 'none'; }, 200);
+  });
+  input.addEventListener('focus', function() {
+    if (dropdown.children.length > 0) dropdown.style.display = 'block';
+  });
+}
+
+// ===== 店铺选择 =====
+function selectShop(el, mode) {
+  document.querySelectorAll(`#shop-select-${mode} .shop-tag`).forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+function getSelectedShop(mode) {
+  const active = document.querySelector(`#shop-select-${mode} .shop-tag.active`);
+  return active ? (active.dataset.shop || null) : null;
+}
+
+// ===== 多商品行 =====
+function addItemRow(mode, sku, name, qty, price) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const tbody = document.getElementById(`item-rows${suffix}`);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="item-sku" value="${sku || ''}" placeholder="SKU编号"></td>
+    <td><div class="ac-wrapper"><input class="item-name" value="${name || ''}" placeholder="商品名称"><div class="ac-dropdown" style="display:none"></div></div></td>
+    <td><input class="item-qty" type="number" value="${qty || 1}" min="1"></td>
+    <td><input class="item-price" type="number" value="${price || 0}" step="0.01"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove()">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  const input = tr.querySelector('.item-name');
+  setupAutoComplete(input);
+}
+
+function getItems(mode) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const items = [];
+  document.querySelectorAll(`#item-rows${suffix} tr`).forEach(tr => {
+    const sku = tr.querySelector('.item-sku').value.trim();
+    const name = tr.querySelector('.item-name').value.trim();
+    const qty = parseInt(tr.querySelector('.item-qty').value) || 1;
+    const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+    if (sku || name) items.push({ sku_id: sku, name, qty, price });
+  });
+  return items;
+}
+
+// ===== 商品自动补全 =====
+let acController = null;
+function setupAutoComplete(input) {
+  input.addEventListener('input', function() {
+    const val = this.value.trim();
+    const wrapper = this.closest('.ac-wrapper');
+    const dropdown = wrapper.querySelector('.ac-dropdown');
+    if (!val) {
+      dropdown.style.display = 'none';
+      return;
+    }
+    // 取消上一次请求
+    if (acController) acController.abort();
+    acController = new AbortController();
+    const controller = acController;
+    fetch('/api/product-search?q=' + encodeURIComponent(val), { signal: controller.signal })
+      .then(r => r.json())
+      .then(data => {
+        if (controller.signal.aborted) return;
+        const results = data.results || [];
+        if (results.length === 0) {
+          dropdown.style.display = 'none';
+          return;
+        }
+        dropdown.innerHTML = results.map(r =>
+          `<div class="ac-item" data-sku="${r.sku}" data-name="${r.name}" data-price="${r.price || 0}">
+            <span>${r.name}</span>
+            <span><span class="ac-sku">${r.sku}</span><span class="ac-tag">${r.match_type}</span></span>
+          </div>`
+        ).join('');
+        dropdown.style.display = 'block';
+        // 点击填充
+        dropdown.querySelectorAll('.ac-item').forEach(el => {
+          el.addEventListener('click', function() {
+            const tr = wrapper.closest('tr');
+            tr.querySelector('.item-sku').value = this.dataset.sku;
+            input.value = this.dataset.name;
+            if (this.dataset.price) tr.querySelector('.item-price').value = this.dataset.price;
+            dropdown.style.display = 'none';
+          });
+        });
+      })
+      .catch(e => {
+        if (e.name !== 'AbortError') {
+          console.error('商品搜索失败:', e);
+        }
+      });
+  });
+  // 失焦隐藏
+  input.addEventListener('blur', function() {
+    setTimeout(() => {
+      const wrapper = this.closest('.ac-wrapper');
+      const dropdown = wrapper.querySelector('.ac-dropdown');
+      dropdown.style.display = 'none';
+    }, 200);
+  });
+  // 聚焦时如果有值且dropdown有内容，重新显示
+  input.addEventListener('focus', function() {
+    const wrapper = this.closest('.ac-wrapper');
+    const dropdown = wrapper.querySelector('.ac-dropdown');
+    if (dropdown.children.length > 0) {
+      dropdown.style.display = 'block';
+    }
+  });
+}
+
+// ===== 示例文本标签 =====
+var EXAMPLES = {
+  free: `4罐小红直邮 张小明 13750635678 浙江省台州市临海市江南街道小溪村1-29号 尽快发货 110108197807127820`,
+};
+
+function fillExample(type) {
+  // 高亮选中的标签
+  document.querySelectorAll('.example-tag').forEach(t => t.classList.remove('active'));
+  const tag = document.querySelector(`.example-tag[data-example="${type}"]`);
+  if (tag) tag.classList.add('active');
+  // 填入示例文本
+  document.getElementById('smart-input').value = EXAMPLES[type] || '';
+}
+
+// ===== 智能解析 =====
+async function parseSmartText(mode) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const text = document.getElementById(`smart-input${suffix}`).value.trim();
+  if (!text) { alert('请先输入订单文本'); return; }
+  const tabId = mode === 'own' ? 'ownshop' : (mode || 'quick');
+  const btn = document.querySelector(`#tab-${tabId} .smart-paste .btn-primary`);
+  btn.textContent = '⏳ 解析中...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/parse-order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text}),
+    });
+    const data = await r.json();
+    const preview = document.getElementById(`parse-preview${suffix}`);
+    if (!data.success) {
+      preview.className = 'parse-preview error';
+      preview.innerHTML = `<div class="pp-row"><span class="pp-label" style="color:#dc2626">❌</span><span class="pp-value" style="color:#dc2626">解析失败: ${data.msg || '无法解析'}</span></div>`;
+      preview.classList.remove('hidden');
+      return;
+    }
+
+    let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    html += '<strong style="color:#059669;font-size:14px">✅ 解析结果预览</strong>';
+    html += `<button class="btn btn-primary btn-sm" onclick="fillParsedData('${mode || 'quick'}')">📥 确认填入表单</button>`;
+    html += '</div>';
+    if (data.receiver_name) html += `<div class="pp-row"><span class="pp-label">收件人</span><span class="pp-value">${esc(data.receiver_name)}</span></div>`;
+    if (data.phone) html += `<div class="pp-row"><span class="pp-label">电话</span><span class="pp-value">${esc(data.phone)}</span></div>`;
+    if (data.state || data.city || data.district) html += `<div class="pp-row"><span class="pp-label">地区</span><span class="pp-value">${esc(data.state||'')} ${esc(data.city||'')} ${esc(data.district||'')}</span></div>`;
+    if (data.address) html += `<div class="pp-row"><span class="pp-label">地址</span><span class="pp-value">${esc(data.address)}</span></div>`;
+    if (data.id_card_number) html += `<div class="pp-row"><span class="pp-label">🪪</span><span class="pp-value">${esc(data.id_card_number)}</span></div>`;
+    if (data.is_direct_mail) html += `<div class="pp-row"><span class="pp-label">直邮</span><span class="pp-value">✅ 是</span></div>`;
+    if (data.items && data.items.length > 0) {
+      html += '<div class="pp-items">';
+      data.items.forEach(item => {
+        html += `<span class="pp-item">${esc(item.name)} × ${item.qty} <small style="color:#666">${esc(item.sku_id||'')}</small></span>`;
+      });
+      html += '</div>';
+    }
+    if (data.buyer_message) html += `<div class="pp-row" style="margin-top:6px"><span class="pp-label">备注</span><span class="pp-value">${esc(data.buyer_message)}</span></div>`;
+    html += '<div class="pp-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #d1d5db;font-size:11px;color:#999">📝 解析时自动保存身份证到本地数据库</div>';
+    preview.className = 'parse-preview';
+    preview.innerHTML = html;
+    preview.classList.remove('hidden');
+
+    window._parsedData = { mode: mode || 'quick', data: data };
+
+    if (data.receiver_name) {
+      try {
+        const cr = await fetch('/api/idcard/check-by-name', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({name: data.receiver_name})
+        });
+        const cd = await cr.json();
+        if (cd.found) {
+          window._parsedData.data.id_card_number = cd.id_number;
+          preview.innerHTML += `<div class="pp-row" style="margin-top:4px;padding-top:4px;border-top:1px dashed #d1d5db;color:#059669"><span class="pp-label">🪪</span><span class="pp-value">已自动匹配身份证: ${esc(cd.id_number)}</span></div>`;
+        }
+      } catch(e) {}
+    }
+  } catch(e) {
+    const preview = document.getElementById(`parse-preview${suffix}`);
+    preview.className = 'parse-preview error';
+    preview.innerHTML = `<div class="pp-row"><span class="pp-label" style="color:#dc2626">❌</span><span class="pp-value" style="color:#dc2626">请求异常: ${esc(e.message)}</span></div>`;
+    preview.classList.remove('hidden');
+  } finally {
+    btn.textContent = '🔍 解析并填入';
+    btn.disabled = false;
+  }
+}
+
+// 将解析数据填入表单
+function fillParsedData(mode) {
+  const p = window._parsedData;
+  if (!p || !p.data) return;
+  const data = p.data;
+  const mode2 = mode || 'quick';
+  const suffix = mode2 !== 'quick' ? `-${mode2}` : '';
+  if (data.receiver_name) document.getElementById(`f-name${suffix}`).value = data.receiver_name;
+  if (data.phone) document.getElementById(`f-phone${suffix}`).value = data.phone;
+  if (data.state) document.getElementById(`f-state${suffix}`).value = data.state;
+  if (data.city) document.getElementById(`f-city${suffix}`).value = data.city;
+  if (data.district) document.getElementById(`f-district${suffix}`).value = data.district;
+  if (data.address) document.getElementById(`f-address${suffix}`).value = data.address;
+  if (data.id_card_number) document.getElementById(`f-idcard${suffix}`).value = data.id_card_number;
+  if (data.buyer_message) document.getElementById(`f-remark${suffix}`).value = data.buyer_message;
+
+  if (data.receiver_name && !data.id_card_number) {
+    autoMatchIdcard(data.receiver_name, mode2);
+  }
+
+  if (data.items && data.items.length > 0) {
+    document.getElementById(`item-rows${suffix}`).innerHTML = '';
+    data.items.forEach(item => {
+      addItemRow(mode2, item.sku_id || '', item.name, item.qty, 0);
+    });
+  }
+  showToast(`✅ 已填入 ${data.receiver_name || '未知'} 的订单`, 'success');
+  document.getElementById(`parse-preview${suffix}`).classList.add('hidden');
+}
+
+// ===== 姓名失焦自动匹配身份证 =====
+async function autoMatchIdcard(name, mode) {
+  if (!name) return;
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  try {
+    const r = await fetch('/api/idcard/check-by-name', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name})
+    });
+    const d = await r.json();
+    if (d.found && d.id_number) {
+      document.getElementById(`f-idcard${suffix}`).value = d.id_number;
+      showToast(`🪪 已自动匹配 ${name} 的身份证`, 'success');
+    }
+  } catch(e) {}
+}
+
+// ===== 身份证预览 =====
+function previewIdcard(input, side, mode) {
+  const file = input.files[0];
+  if (!file) return;
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const slot = document.getElementById(`idcard-${side}${suffix}`);
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    slot.querySelectorAll('img, .slot-icon, .slot-label').forEach(el => el.remove());
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.style.cssText = 'max-width:100%;max-height:120px;border-radius:6px;margin-bottom:4px';
+    slot.insertBefore(img, slot.querySelector('input'));
+    const label = document.createElement('div');
+    label.className = 'slot-label';
+    label.textContent = side === 'front' ? '正面 ✓ 点击更换' : '反面 ✓ 点击更换';
+    slot.appendChild(label);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== OCR识别身份证 =====
+async function ocrIdcard(mode) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const frontInput = document.getElementById(`idcard-front-input${suffix}`);
+  const revInput = document.getElementById(`idcard-reverse-input${suffix}`);
+  const frontFile = frontInput.files[0];
+  const revFile = revInput.files[0];
+  if (!frontFile && !revFile) {
+    showIdcardResult('请先上传身份证照片（正面或反面）', false);
+    return;
+  }
+  const file = frontFile || revFile;
+  const formData = new FormData();
+  formData.append('image', file);
+  const btn = document.querySelector(`#tab-${mode || 'quick'} .idcard-section .btn-primary`);
+  btn.textContent = '⏳ 识别中...';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/idcard/ocr', { method: 'POST', body: formData });
+      const data = await r.json();
+    if (data.success) {
+      const suffix2 = mode && mode !== 'quick' ? `-${mode}` : '';
+      document.getElementById(`f-name${suffix2}`).value = data.name || '';
+      document.getElementById(`f-idcard${suffix2}`).value = data.id_number || '';
+      showIdcardResult(`✅ 姓名: ${data.name}<br>✅ 身份证号: ${data.id_number}`, true);
+    } else {
+      showIdcardResult(`⚠️ OCR未识别到文字: ${data.msg || '请手动输入'}`, false);
+    }
+  } catch(e) {
+    showIdcardResult(`❌ OCR失败: ${e.message}`, false);
+  } finally {
+    btn.textContent = '🔍 识别身份证';
+    btn.disabled = false;
+  }
+}
+
+// ===== 上传身份证到认证系统 =====
+async function uploadIdcard(mode) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const name = document.getElementById(`f-name${suffix}`).value.trim();
+  const idNumber = document.getElementById(`f-idcard${suffix}`).value.trim();
+  const frontInput = document.getElementById(`idcard-front-input${suffix}`);
+  const revInput = document.getElementById(`idcard-reverse-input${suffix}`);
+  const frontFile = frontInput.files[0];
+  const revFile = revInput.files[0];
+  if (!name || !idNumber) {
+    showIdcardResult('请先填写姓名和身份证号（可先用OCR识别）', false);
+    return;
+  }
+  if (!frontFile || !revFile) {
+    showIdcardResult('请上传身份证正反面照片', false);
+    return;
+  }
+  const btn = document.querySelector(`#tab-${mode || 'quick'} .idcard-section .btn-success`);
+  btn.textContent = '⏳ 上传中...';
+  btn.disabled = true;
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('id_number', idNumber);
+    formData.append('front', frontFile);
+    formData.append('reverse', revFile);
+    const r = await fetch('/api/idcard/upload', { method: 'POST', body: formData });
+    const data = await r.json();
+    if (data.success) {
+      let msg = data.skipped ? '✅ 身份证已认证，无需重复上传' : '✅ 上传成功！';
+      if (data.ocr && data.ocr.success) {
+        msg += `<br>📝 OCR: ${data.ocr.name} / ${data.ocr.id_number}`;
+      }
+      // 同步姓名和号码
+      if (data.ocr && data.ocr.success) {
+        document.getElementById(`f-name${suffix}`).value = data.ocr.name || name;
+        document.getElementById(`f-idcard${suffix}`).value = data.ocr.id_number || idNumber;
+      }
+      showIdcardResult(msg, true);
+    } else {
+      showIdcardResult(`❌ 上传失败: ${data.msg || '未知错误'}`, false);
+    }
+  } catch(e) {
+    showIdcardResult(`❌ 请求异常: ${e.message}`, false);
+  } finally {
+    btn.textContent = '📤 上传认证';
+    btn.disabled = false;
+  }
+}
+
+function showIdcardResult(text, isSuccess) {
+  // 移除旧toast
+  const old = document.querySelector('.toast-overlay');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = `toast-overlay ${isSuccess ? 'success' : 'error'}`;
+  el.innerHTML = text;
+  document.body.appendChild(el);
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+}
+
+// ===== 推单 =====
+function clearForm(mode) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const s = suffix;
+  [`f-so-id${s}`,`f-name${s}`,`f-phone${s}`,`f-state${s}`,`f-city${s}`,`f-district${s}`,`f-address${s}`,`f-idcard${s}`,`f-remark${s}`].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById(`f-pay${s}`).value = '0';
+  document.getElementById(`item-rows${s}`).innerHTML = '';
+  addItemRow(mode || 'quick', '', '', 1, 0);
+  ['front', 'reverse'].forEach(side => {
+    const slot = document.getElementById(`idcard-${side}${s}`);
+    slot.querySelectorAll('img, .slot-icon, .slot-label').forEach(el => el.remove());
+    const icon = document.createElement('div');
+    icon.className = 'slot-icon';
+    icon.textContent = '📷';
+    slot.insertBefore(icon, slot.querySelector('input'));
+    const label = document.createElement('div');
+    label.className = 'slot-label';
+    label.innerHTML = `身份证${side === 'front' ? '正面' : '反面'}<br><small>（${side === 'front' ? '人像面' : '国徽面'}）</small>`;
+    slot.appendChild(label);
+  });
+  document.getElementById(`idcard-front-input${s}`).value = '';
+  document.getElementById(`idcard-reverse-input${s}`).value = '';
+  document.getElementById(`idcard-result${s}`).classList.add('hidden');
+  document.getElementById(`result-${mode || 'quick'}`).classList.add('hidden');
+  document.getElementById(`parse-preview${s}`).classList.add('hidden');
+}
+
+async function pushOrder(mode) {
+  const suffix = mode && mode !== 'quick' ? `-${mode}` : '';
+  const s = suffix;
+  const btnMode = mode || 'quick';
+  const btn = document.getElementById(`btn-push${suffix}`);
+  const name = document.getElementById(`f-name${s}`).value.trim();
+  const phone = document.getElementById(`f-phone${s}`).value.trim();
+  const state = document.getElementById(`f-state${s}`).value.trim();
+  const city = document.getElementById(`f-city${s}`).value.trim();
+  const district = document.getElementById(`f-district${s}`).value.trim();
+  const address = document.getElementById(`f-address${s}`).value.trim();
+  const idcard = document.getElementById(`f-idcard${s}`).value.trim();
+
+  if (!name || !phone || !state || !city || !district || !address) {
+    showResult(btnMode, '❌ 请填写收件人、电话、省、市、区、详细地址', false);
+    return;
+  }
+
+  const items = getItems(btnMode);
+  if (items.length === 0) {
+    showResult(btnMode, '❌ 请填写至少一个商品', false);
+    return;
+  }
+
+  const data = {
+    so_id: document.getElementById(`f-so-id${s}`).value.trim(),
+    receiver_name: name,
+    receiver_phone: phone,
+    receiver_state: document.getElementById(`f-state${s}`).value.trim(),
+    receiver_city: document.getElementById(`f-city${s}`).value.trim(),
+    receiver_district: document.getElementById(`f-district${s}`).value.trim(),
+    receiver_address: address,
+    items: items,
+    pay_amount: parseFloat(document.getElementById(`f-pay${s}`).value) || 0,
+    id_card_number: document.getElementById(`f-idcard${s}`).value.trim(),
+    buyer_message: document.getElementById(`f-remark${s}`).value.trim(),
+  };
+
+  // 店铺处理
+  if (mode === 'own') {
+    if (!_lastShopKey || !_SHOPS.find(s2 => s2.key === _lastShopKey)) {
+      showResult('own', '❌ 请先在搜索框中选择一个客户店铺', false);
+      return;
+    }
+    data.shop_key = _lastShopKey;
+  } else {
+    data.shop_key = _lastShopKey; // 快速下单用上次选中的客户
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 推送中...';
+
+  try {
+    const resp = await fetch('/api/push', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    });
+    const result = await resp.json();
+    if (result.success) {
+      let msg = `<div style="line-height:1.8">✅ <strong>推单成功！</strong><br>`;
+      msg += `🏪 店铺: ${esc(result.shop_name)}<br>`;
+      msg += `📄 订单号: <code style="background:#eef4ff;padding:2px 8px;border-radius:4px;cursor:pointer;user-select:all" onclick="navigator.clipboard.writeText('${esc(result.so_id)}');showToast('已复制: ${esc(result.so_id)}','success')">${esc(result.so_id)}</code><br>`;
+      if (result.o_id) msg += `🆔 内部ID: <code style="background:#eef4ff;padding:2px 8px;border-radius:4px;cursor:pointer;user-select:all" onclick="navigator.clipboard.writeText('${esc(result.o_id)}');showToast('已复制: ${esc(result.o_id)}','success')">${esc(result.o_id)}</code><br>`;
+      if (data.id_card_number) msg += `🪪 身份证: ${esc(data.id_card_number)}<br>`;
+      if (result.tracking_no) msg += `📦 物流单号: ${esc(result.tracking_no)}<br>`;
+      msg += `</div>`;
+      showResult(btnMode, msg, true);
+      showToast(`✅ ${esc(result.shop_name)} 推单成功！`, 'success');
+      setTimeout(() => clearForm(btnMode), 1500);
+    } else {
+      let msg = `<div style="line-height:1.8">❌ <strong>推单失败</strong><br>`;
+      msg += `🏪 店铺: ${esc(result.shop_name)}<br>`;
+      msg += `⚠️ 错误: ${esc(result.msg || '未知错误')}`;
+      msg += `</div>`;
+      showResult(btnMode, msg, false);
+    }
+  } catch (e) {
+    showResult(btnMode, `<div style="line-height:1.8">❌ <strong>请求异常</strong><br>⚠️ ${esc(e.message)}</div>`, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 推送到聚水潭';
+  }
+}
+
+// ===== Excel 批量上传 =====
+let _excelPreviewData = null;  // 预览数据缓存
+
+async function uploadExcel() {
+  const input = document.getElementById('file-input');
+  const file = input.files[0];
+  if (!file) return;
+
+  const zone = document.getElementById('upload-zone');
+  const shopKey = getSelectedShop('excel');
+
+// 预览模式（需要用户确认）
+  const formData = new FormData();
+  formData.append('file', file);
+  if (shopKey) formData.append('shop_key', shopKey);
+  formData.append('preview', 'true');  // 预览模式 - 只解析不推送
+
+  zone.innerHTML = '<div class="icon">📋</div><p><strong>解析预览中...</strong></p>';
+  console.log('[Excel] 开始预览，shopKey=', shopKey);
+
+  try {
+    const resp = await fetch('/api/push/batch', { method: 'POST', body: formData });
+    const result = await resp.json();
+
+    if (!result.success) {
+      showResult('excel', `<div style="line-height:1.8">❌ <strong>解析失败</strong><br>${result.msg || '未知错误'}</div>`, false);
+      zone.innerHTML = '<div class="icon">📤</div><p><strong>点击上传 Excel 文件</strong></p><p class="hint">支持 .xlsx / .xls</p>';
+      input.value = '';
+      return;
+    }
+
+    // ===== 显示预览让用户确认 =====
+    // 保存file到全局变量，供确认推送使用
+    window._currentExcelFile = file;
+    _excelPreviewData = { file, shopKey, result };
+
+    // 还原上传区到初始状态，供下次上传
+    zone.innerHTML = '<div class="icon">📤</div><p><strong>点击上传 Excel 文件</strong></p><p class="hint">支持 .xlsx / .xls</p>';
+
+    // 预览渲染到 result-excel 区域（不与 upload-zone 的 onclick 冲突）
+    let html = `<div style="line-height:1.8;max-height:300px;overflow-y:auto;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:14px">
+      <p style="margin-bottom:12px"><strong>📋 解析完成，共 ${result.total} 单</strong></p>
+      <div style="font-size:13px">`;
+
+    if (result.results) {
+      result.results.forEach((r, i) => {
+        const itemsOk = r.items && r.items.every(it => it.matched);
+        const icon = r.ready && itemsOk ? '✅' : '⚠️';
+        html += `<div style="background:${r.ready && itemsOk ? '#f0fdf4':'#fef3c7'};padding:8px;margin:4px 0;border-radius:6px">
+          <div><strong>${icon} ${i+1}. ${r.receiver || '(无姓名)'}</strong></div>
+          <div style="color:#666;font-size:12px">📱 ${r.phone || '-'} | 🏪 ${r.shop}</div>
+          <div style="color:#666;font-size:12px">📍 ${r.address || '-'}</div>
+          <div style="font-size:12px">📦 ${r.items ? r.items.map(it => `${it.name}${it.matched?'':' ❌无SKU'}`).join(', ') : '-'}</div>
+        </div>`;
+      });
+    }
+
+    html += `</div></div>
+      <button class="btn btn-primary" onclick="_confirmExcelPush()" style="margin-top:12px;width:100%">✅ 确认推送${result.total}单</button>
+      <button class="btn" onclick="_cancelExcelPush()" style="margin-top:8px;width:100%;background:#f1f5f9">取消</button>`;
+
+    // 用 result-excel 展示预览，不与 upload-zone onclick 冲突
+    const resultEl = document.getElementById('result-excel');
+    resultEl.classList.remove('hidden', 'success', 'error');
+    resultEl.classList.add('success');
+    resultEl.innerHTML = html;
+    
+  } catch (e) {
+    showResult('excel', `<div style="line-height:1.8">❌ <strong>解析异常</strong><br>${e.message}</div>`, false);
+    zone.innerHTML = '<div class="icon">📤</div><p><strong>点击上传 Excel 文件</strong></p><p class="hint">支持 .xlsx / .xls</p>';
+    // input.value = '';  // 如果解析失败才清空
+  }
+}
+
+// ===== 确认推送 =====
+async function _confirmExcelPush() {
+  if (!_excelPreviewData) return;
+
+  // 使用全局保存的file对象
+  const file = window._currentExcelFile;
+  if (!file) {
+    showResult('excel', `❌ 文件丢失，请重新上传`, false);
+    return;
+  }
+
+  const { shopKey } = _excelPreviewData;
+  const zone = document.getElementById('upload-zone');
+  const input = document.getElementById('file-input');
+
+  zone.innerHTML = '<div class="icon">⏳</div><p><strong>正在推送...</strong></p>';
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  if (shopKey) formData.append('shop_key', shopKey);
+  // 不传preview，默认false=正式推送
+
+  try {
+    const resp = await fetch('/api/push/batch', { method: 'POST', body: formData });
+    const result = await resp.json();
+
+    if (result.success) {
+      let html = `✅ 批量推单完成！\n`;
+      html += `总计: ${result.total} 单 | ✅ 成功: ${result.success_count} | ❌ 失败: ${result.fail_count}\n\n`;
+      if (result.results) {
+        result.results.forEach((r, i) => {
+          const status = r.success ? '✅' : '❌';
+          html += `${i+1}. ${status} [${r.shop}] ${r.receiver} | ${r.so_id || '自动'} | ${r.msg}\n`;
+        });
+      }
+      showResult('excel', html, result.fail_count === 0);
+    } else {
+      showResult('excel', `❌ 批量推单失败\n${result.msg || '未知错误'}`, false);
+    }
+  } catch (e) {
+    showResult('excel', `❌ 请求异常: ${e.message}`, false);
+  }
+
+  _excelPreviewData = null;
+  zone.innerHTML = '<div class="icon">📤</div><p><strong>点击上传 Excel 文件</strong></p><p class="hint">支持 .xlsx / .xls</p>';
+  input.value = '';
+}
+
+// ===== 取消推送 =====
+function _cancelExcelPush() {
+  _excelPreviewData = null;
+  const zone = document.getElementById('upload-zone');
+  const input = document.getElementById('file-input');
+  zone.innerHTML = '<div class="icon">📤</div><p><strong>点击上传 Excel 文件</strong></p><p class="hint">支持 .xlsx / .xls</p>';
+  input.value = '';
+  // 清除预览结果区域
+  const resultEl = document.getElementById('result-excel');
+  resultEl.classList.add('hidden');
+  resultEl.innerHTML = '';
+}
+
+// ===== 结果展示 =====
+function showResult(mode, text, isSuccess) {
+  const el = document.getElementById(`result-${mode}`);
+  el.classList.remove('hidden', 'success', 'error');
+  el.classList.add(isSuccess ? 'success' : 'error');
+  el.innerHTML = text;
+}
+
+// ===== 初始化: 健康检查 =====
+async function init() {
+  // 初始行自动补全
+  const initialInput = document.querySelector('.item-name');
+  if (initialInput) setupAutoComplete(initialInput);
+
+  // 自有店铺智能识别
+  setupOwnshopAutoComplete();
+
+  // 姓名失焦自动匹配身份证（快速下单 + 自有店铺）
+  ['f-name', 'f-name-own'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const mode = id === 'f-name-own' ? 'own' : 'quick';
+      el.addEventListener('blur', function() {
+        const name = this.value.trim();
+        if (name) autoMatchIdcard(name, mode);
+      });
+    }
+  });
+
+  try {
+    const r = await fetch('/api/shops');
+    const data = await r.json();
+    document.getElementById('stat-total').textContent = data.shops.length;
+    document.getElementById('stat-default').textContent = data.shops.length > 0 ? data.shops[0].name : 'AUSTARWX';
+  } catch(e) {}
+
+  try {
+    const r = await fetch('/api/health');
+    const h = await r.json();
+    document.getElementById('stat-jst').textContent = h.jst_connected ? '🟢' : '🔴';
+    document.getElementById('stat-jst').title = h.jst_msg || '';
+  } catch(e) {
+    document.getElementById('stat-jst').textContent = '⚫';
+  }
+  // 默认选中自由文本示例
+  fillExample('free');
+}
+
+// ===== Toast（提示消息，点击/3秒自动消失） =====
+function showToast(text, type) {
+  const old = document.querySelector('.toast-overlay');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = `toast-overlay ${type === 'success' ? 'success' : type === 'warning' ? 'info' : 'error'}`;
+  el.textContent = text;
+  el.style.cursor = 'pointer';
+  el.onclick = () => el.remove();
+  document.body.appendChild(el);
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 3500);
+}
+
+// ===== 单号查询 =====
+async function queryLogistics() {
+  const name = document.getElementById('logis-name').value.trim();
+  if (!name) return showToast('请输入收件人姓名', 'warning');
+  const btn = document.querySelector('#tab-logistics .btn-primary');
+  btn.disabled = true; btn.textContent = '⏳ 查询中...';
+  const div = document.getElementById('result-logistics');
+  div.classList.remove('hidden');
+  try {
+    const r = await fetch('/api/query-logistics', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name: name})
+    });
+    const data = await r.json();
+    if (data.success && data.data && data.data.length > 0) {
+      let html = `<div class="card" style="padding:16px;background:#f8f9ff"><p style="font-size:13px;margin-bottom:12px">收件人: <strong>${esc(name)}</strong> — 共 ${data.data.length} 条记录</p>`;
+      for (const d of data.data) {
+        html += '<div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #e0e0e0">';
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">`;
+        html += `<div><strong>货易达单号:</strong> <code style="background:#eef4ff;padding:2px 8px;border-radius:4px;font-size:13px;user-select:all;cursor:pointer" onclick="navigator.clipboard.writeText('${esc(d.sn||'')}');showToast('已复制: ${esc(d.sn||'')}','success')">${esc(d.sn||'')}</code></div>`;
+        html += `<div><strong>国际单号:</strong> <code style="background:#eef4ff;padding:2px 8px;border-radius:4px;font-size:13px;user-select:all;cursor:pointer" onclick="navigator.clipboard.writeText('${esc(d.tracking_no||'')}');showToast('已复制: ${esc(d.tracking_no||'')}','success')">${esc(d.tracking_no||'')}</code></div>`;
+        html += `<div><strong>国内单号:</strong> <code style="background:#eef4ff;padding:2px 8px;border-radius:4px;font-size:13px;user-select:all;cursor:pointer" onclick="navigator.clipboard.writeText('${esc(d.domestic_no||'')}');showToast('已复制: ${esc(d.domestic_no||'')}','success')">${esc(d.domestic_no||'')}</code></div>`;
+        html += `<div><strong>状态:</strong> <span class="status-${esc(d.state_code||0)}">${d.city === '签收' ? '✅ 签收' : esc(d.city || d.state || '')}</span></div>`;
+        html += `<div><strong>线路:</strong> ${esc(d.line||'')}</div>`;
+        html += `<div><strong>寄件人:</strong> ${esc(d.sender||'')}</div>`;
+        html += `<div><strong>创建时间:</strong> ${esc(d.created||'')}</div>`;
+        html += `<div><strong>商家单号:</strong> ${esc(d.merchant_sn||'—')}</div>`;
+        html += '</div></div>';
+      }
+      html += '</div>';
+      div.innerHTML = html;
+    } else {
+      div.innerHTML = `<div class="card" style="padding:16px;background:#fff5f5"><p style="color:#dc2626">❌ 未找到 <strong>${esc(name)}</strong> 的货易达记录</p></div>`;
+    }
+  } catch(e) {
+    div.innerHTML = `<div class="card" style="padding:16px;background:#fff5f5"><p style="color:#dc2626">❌ 请求失败: ${esc(e.message)}</p></div>`;
+  }
+  btn.disabled = false; btn.textContent = '🔍 查询单号';
+}
+
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+init();
+</script>
+</body>
+</html>
