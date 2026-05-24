@@ -33,9 +33,9 @@ start() {
         rm -f "$PIDFILE"
     fi
     
-    echo "Starting $NAME..."
+    echo "Starting $NAME (gunicorn)..."
     cd "$DIR"
-    nohup python3 app.py >> "$LOGFILE" 2>&1 &
+    nohup gunicorn -w 2 -b 0.0.0.0:${ZYGJ_PORT:-8899} app:app >> "$LOGFILE" 2>&1 &
     echo $! > "$PIDFILE"
     sleep 2
     

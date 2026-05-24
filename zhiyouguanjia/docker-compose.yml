@@ -9,16 +9,17 @@ services:
       - JST_APP_KEY=${JST_APP_KEY}
       - JST_APP_SECRET=${JST_APP_SECRET}
       - JST_TOKEN=${JST_TOKEN}
+      - HEUTE_USERNAME=${HEUTE_USERNAME:-USTAR}
+      - HEUTE_PASSWORD=${HEUTE_PASSWORD}
+      - TRACK_USERNAME=${TRACK_USERNAME:-admin}
+      - TRACK_PASSWORD=${TRACK_PASSWORD}
+      - IDCARD_APP_KEY=${IDCARD_APP_KEY}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
       - ZYGJ_PORT=${ZYGJ_PORT:-8899}
+      - ZYGJ_DEBUG=${ZYGJ_DEBUG:-false}
     volumes:
-      # 数据持久化（SQLite + 上传文件）
-      - zhiyouguanjia_data:/app/data
-      - zhiyouguanjia_uploads:/app/uploads
-      - zhiyouguanjia_idcard:/app/身份证上传
-      # 代码热重载（开发用，生产可注释掉）
-      # - ./templates:/app/templates
-
-volumes:
-  zhiyouguanjia_data:
-  zhiyouguanjia_uploads:
-  zhiyouguanjia_idcard:
+      # 用 bind mount 直接映射 workspace
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./身份证上传:/app/身份证上传
+      - ./templates:/app/templates
