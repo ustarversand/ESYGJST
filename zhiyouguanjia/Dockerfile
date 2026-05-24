@@ -17,7 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
 COPY app.py config.py auth.py price_match.py ./
-COPY push_engine.py push_records.py order_parser.py excel_parser.py ./
+COPY push_engine.py push_records.py excel_parser.py ./
+COPY order_parser/ order_parser/
 COPY heuste_client.py heuste_sdk.py idcard_handler.py models.py ./
 COPY query_jst_products.py ./
 COPY data/ data/
